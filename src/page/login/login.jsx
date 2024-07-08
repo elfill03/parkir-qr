@@ -54,14 +54,15 @@ const Login = () => {
 
   useEffect(() => {
     if (data && data.users.length > 0) {
-      const user = data.users[0];
-      const { role_id, password: hashedPassword } = user;
+      const user = data.users.find(
+        (user) =>
+          bcrypt.compareSync(password, user.password) ||
+          password === user.password
+      );
 
-      const isPasswordValid =
-        bcrypt.compareSync(password, hashedPassword) ||
-        password === hashedPassword;
+      if (user) {
+        const { role_id } = user;
 
-      if (isPasswordValid) {
         // Store user details in localStorage
         localStorage.setItem("user", JSON.stringify(user));
 
@@ -70,6 +71,7 @@ const Login = () => {
         else if (role_id === 2) navigate("/dashboard-petugas");
         else if (role_id === 3) navigate("/dashboard-mahasiswa");
       } else {
+        setNotification(true);
       }
     } else if (data && data.users.length === 0) {
       // Handle login failure
