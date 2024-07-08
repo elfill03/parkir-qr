@@ -9,6 +9,9 @@
     "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview"
   },
+  "resolutions": {
+    "react": "^18.3.1"
+  },
   "dependencies": {
     "@apollo/client": "^3.10.8",
     "@emotion/react": "^11.11.4",
