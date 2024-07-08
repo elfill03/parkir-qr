@@ -199,15 +199,19 @@ const ListCardMotor = () => {
 
     if (card.foto_STNK) {
       const stnkRef = ref(storage, card.foto_STNK);
-      deletePromises.push(deleteObject(stnkRef));
+      deletePromises.push(deleteObject(stnkRef).catch(() => {}));
     }
     if (card.foto_KTM) {
       const ktmRef = ref(storage, card.foto_KTM);
-      deletePromises.push(deleteObject(ktmRef));
+      deletePromises.push(deleteObject(ktmRef).catch(() => {}));
     }
     if (card.foto_motor) {
       const motorRef = ref(storage, card.foto_motor);
-      deletePromises.push(deleteObject(motorRef));
+      deletePromises.push(deleteObject(motorRef).catch(() => {}));
+    }
+    if (card.foto_QR_Code) {
+      const qrCodeRef = ref(storage, card.foto_QR_Code);
+      deletePromises.push(deleteObject(qrCodeRef).catch(() => {}));
     }
 
     await Promise.all(deletePromises);
