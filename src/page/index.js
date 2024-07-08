@@ -1,0 +1,12 @@
+export { default as Dashboard } from "./super-admin/Dashboard";
+export { default as Datapetugas } from "./super-admin/DataPenggunapetugas";
+export { default as Datamahasiswa } from "./super-admin/Datapenggunamahasiswa";
+export { default as Riwayatkeluar } from "./super-admin/RiwayatScanKeluar";
+export { default as Riwayatmasuk } from "./super-admin/RiwayatScanMasuk";
+export { default as Tarif } from "./super-admin/Tarifharga";
+export { default as Tarifparkirmahasiswa } from "./mahasiswa/Tarifparkir";
+export { default as Listcardmotor } from "./mahasiswa/ListCardMotor";
+export { default as Detailcardmotor } from "./mahasiswa/DetailCardMotor";
+export { default as Login } from "./login/login";
+export { default as Dashboardmahasiswa } from "./mahasiswa/DashboardMahasiswa";
+export { default as Dashboardpetugas } from "./petugas/DashboardPetugas";
