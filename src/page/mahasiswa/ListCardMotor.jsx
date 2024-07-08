@@ -115,6 +115,12 @@ const ListCardMotor = () => {
       return;
     }
 
+    if (!fotoSTNK || !fotoKTM || !fotoMotor) {
+      setNotificationMessage("Silahkan upload foto terlebih dahulu.");
+      setNotification(true);
+      return;
+    }
+
     try {
       const urls = await uploadFiles();
       const { data } = await createCard({
@@ -143,6 +149,12 @@ const ListCardMotor = () => {
 
   const handleEdit = async () => {
     if (!selectedCard) return;
+
+    if (!fotoSTNK || !fotoKTM || !fotoMotor) {
+      setNotificationMessage("Silahkan upload foto terlebih dahulu.");
+      setNotification(true);
+      return;
+    }
 
     try {
       await deleteFilesFromStorage(selectedCard);
@@ -296,7 +308,7 @@ const ListCardMotor = () => {
               </p>
             </div>
           ) : (
-            <div className="flex flex-wrap justify-center">
+            <div className="flex flex-wrap justify-center xl:justify-start">
               {cardMotors.map((card, index) => (
                 <div key={card.id} className="mb-5 mx-10 p-2">
                   <div className="p-5 bg-white-light shadow-2xl rounded-xl">

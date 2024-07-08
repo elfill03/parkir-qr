@@ -131,7 +131,7 @@ const Riwayatparkirmasuk = () => {
   return (
     <>
       {/* Table Riwayat */}
-      <center className="mt-auto mb-auto">
+      <center className="mt-auto mb-auto xl:mt-0">
         <div className="card custom-table mb-10">
           <div className="flex" style={{ width: "90%" }}>
             <h1 className=" font-semibold text-2xl">Riwayat Parkir Masuk</h1>

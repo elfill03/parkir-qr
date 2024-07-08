@@ -113,7 +113,7 @@ const Tarifharga = () => {
               />
             </div>
           </center>
-          <center className="mt-auto mb-auto">
+          <center className="mt-auto mb-auto xl:mt-0">
             <div className="flex" style={{ width: "90%" }}>
               <div className="p-5 bg-white-light rounded-xl">
                 <img className="h-auto w-30 mb-5" src={img5} alt="motorcycle" />
