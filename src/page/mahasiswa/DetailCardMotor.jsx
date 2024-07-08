@@ -180,7 +180,7 @@ const DetailCardMotor = () => {
       >
         <div className="flex justify-center" ref={qrRef}>
           <QRCode
-            value={`/list-card-motor/${user.id}/detail-card-motor/${cardId}`}
+            value={`https://parkir-qr-telkom-university-surabaya.netlify.app/list-card-motor/${user.id}/detail-card-motor/${cardId}`}
           />
         </div>
         <button
