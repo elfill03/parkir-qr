@@ -7,6 +7,7 @@ export default defineConfig({
   build: {
     rollupOptions: {
       external: ['bcryptjs']
-    }
+    },
+    outDir: 'dist' // Pastikan output ke direktori 'dist'
   }
 })
