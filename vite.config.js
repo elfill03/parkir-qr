@@ -6,8 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     rollupOptions: {
-      external: ['bcryptjs']
-    },
-    outDir: 'dist' // Pastikan output ke direktori 'dist'
+      // Hapus external configuration
+    }
   }
 })
