@@ -9,6 +9,8 @@ import {
   Login,
   Riwayatkeluar,
   Riwayatmasuk,
+  Scankeluar,
+  Scanmasuk,
   Tarif,
   Tarifparkirmahasiswa,
 } from "../page";
@@ -40,6 +42,22 @@ const router = [
     element: (
       <ProtectedRoute roleRequired={2}>
         <Dashboardpetugas />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/scan-masuk-parkir",
+    element: (
+      <ProtectedRoute roleRequired={2}>
+        <Scanmasuk />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/scan-keluar-parkir",
+    element: (
+      <ProtectedRoute roleRequired={2}>
+        <Scankeluar />
       </ProtectedRoute>
     ),
   },

@@ -10,3 +10,5 @@ export { default as Detailcardmotor } from "./mahasiswa/DetailCardMotor";
 export { default as Login } from "./login/login";
 export { default as Dashboardmahasiswa } from "./mahasiswa/DashboardMahasiswa";
 export { default as Dashboardpetugas } from "./petugas/DashboardPetugas";
+export { default as Scanmasuk } from "./petugas/ScanMasuk";
+export { default as Scankeluar } from "./petugas/ScanKeluar";

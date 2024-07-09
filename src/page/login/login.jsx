@@ -51,11 +51,13 @@ const Login = () => {
     const { data } = await login({ variables: { email } });
 
     if (data && data.users.length > 0) {
-      const user = data.users.find((user) =>
-        bcrypt.compareSync(password, user.password)
-      );
+      const user = data.users[0]; // Get the first user matching the email
 
-      if (user) {
+      // Compare password with hash in the database or plain text
+      const isPasswordMatch =
+        bcrypt.compareSync(password, user.password) || password === user.password;
+
+      if (isPasswordMatch) {
         const { role_id } = user;
 
         // Store user details in localStorage
