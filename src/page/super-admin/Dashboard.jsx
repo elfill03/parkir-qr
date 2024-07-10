@@ -37,6 +37,7 @@ const GET_PETUGAS_COUNT = gql`
 const GET_RIWAYAT_PARKIR = gql`
   query GetRiwayatParkir($startDate: timestamptz!, $endDate: timestamptz!) {
     riwayat_scans(where: { scan_masuk: { _gte: $startDate, _lte: $endDate } }) {
+      id
       scan_masuk
       scan_keluar
     }
@@ -79,15 +80,17 @@ const Dashboard = () => {
 
       const formattedData = riwayatData.riwayat_scans.reduce((acc, scan) => {
         const masukDate = new Date(scan.scan_masuk).getDate();
-        const keluarDate = new Date(scan.scan_keluar).getDate();
+        const keluarDate = scan.scan_keluar
+          ? new Date(scan.scan_keluar).getDate()
+          : null;
 
         if (!acc[masukDate])
           acc[masukDate] = { date: masukDate, masuk: 0, keluar: 0 };
-        if (!acc[keluarDate])
+        if (keluarDate && !acc[keluarDate])
           acc[keluarDate] = { date: keluarDate, masuk: 0, keluar: 0 };
 
         acc[masukDate].masuk += 1;
-        acc[keluarDate].keluar += 1;
+        if (keluarDate) acc[keluarDate].keluar += 1;
 
         return acc;
       }, {});
@@ -101,8 +104,8 @@ const Dashboard = () => {
       setChartData(dataArray);
 
       const totalMasuk = dataArray.reduce((sum, data) => sum + data.masuk, 0);
-      const totalKeluar = dataArray.reduce((sum, data) => sum + data.keluar, 0);
-      setTotalVehicles(totalMasuk + totalKeluar);
+
+      setTotalVehicles(totalMasuk);
     }
   }, [riwayatData, selectedMonth]);
 

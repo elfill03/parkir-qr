@@ -50,7 +50,7 @@ const SidebarPetugas = () => {
                 >
                   <div className="flex py-5">
                     <NavLink
-                      to="/dashboard"
+                      to="/dashboard-petugas"
                       className={({ isActive }) =>
                         `flex items-center ${
                           isActive

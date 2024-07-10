@@ -90,7 +90,7 @@ const Riwayatparkirkeluar = () => {
     if (!isoDate) return "Belum keluar";
     const date = new Date(isoDate);
     // Adjust timezone
-    date.setHours(date.getHours() - 7);
+    date.setHours(date.getHours() );
     const formattedDate = `${date.getDate()}-${
       date.getMonth() + 1
     }-${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
@@ -102,7 +102,7 @@ const Riwayatparkirkeluar = () => {
     <div className="flex justify-center">
       <img
         src={rowData.card_motor.foto_QR_Code}
-        alt="Foto Mahasiswa"
+        alt="Foto QR Code"
         style={{
           maxWidth: "100px",
           minWidth: "60px",

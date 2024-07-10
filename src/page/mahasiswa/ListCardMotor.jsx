@@ -91,6 +91,8 @@ const ListCardMotor = () => {
   const [deleteCard] = useMutation(DELETE_CARD);
   const [displayDialog, setDisplayDialog] = useState(false);
   const [editDialog, setEditDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [deleteCardId, setDeleteCardId] = useState(null);
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [dialogWidth, setDialogWidth] = useState("30%");
@@ -184,8 +186,9 @@ const ListCardMotor = () => {
     }
   };
 
-  const handleDelete = async (card) => {
+  const handleDelete = async () => {
     try {
+      const card = cardMotors.find((card) => card.id === deleteCardId);
       await deleteFilesFromStorage(card);
 
       const { data } = await deleteCard({
@@ -203,7 +206,15 @@ const ListCardMotor = () => {
         "GraphQL error details:",
         error.networkError?.result?.errors || error.message
       );
+    } finally {
+      setDeleteConfirmDialog(false);
+      setDeleteCardId(null);
     }
+  };
+
+  const confirmDeleteCard = (id) => {
+    setDeleteCardId(id);
+    setDeleteConfirmDialog(true);
   };
 
   const deleteFilesFromStorage = async (card) => {
@@ -337,7 +348,7 @@ const ListCardMotor = () => {
                       </button>
                       <button
                         className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
-                        onClick={() => handleDelete(card)}
+                        onClick={() => confirmDeleteCard(card.id)}
                       >
                         <BsTrash className="my-auto me-1" />
                         Hapus
@@ -470,6 +481,37 @@ const ListCardMotor = () => {
             label="Simpan"
             icon="pi pi-check"
             onClick={handleEdit}
+            autoFocus
+            className="bg-green-light py-2 px-4 ms-5 text-white-light"
+            severity="success"
+          />
+        </div>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        header="Konfirmasi Hapus"
+        visible={deleteConfirmDialog}
+        onHide={() => setDeleteConfirmDialog(false)}
+        draggable={false}
+        className="centered-dialog"
+        style={{ width: "30%" }}
+      >
+        <div className="flex justify-center mt-5">
+          <p>Apakah Anda yakin ingin menghapus card motor ini?</p>
+        </div>
+        <div className="flex justify-center mt-5">
+          <Button
+            label="Batal"
+            icon="pi pi-times"
+            onClick={() => setDeleteConfirmDialog(false)}
+            className="bg-red-maron py-2 px-4 text-white-light"
+            severity="danger"
+          />
+          <Button
+            label="Hapus"
+            icon="pi pi-check"
+            onClick={handleDelete}
             autoFocus
             className="bg-green-light py-2 px-4 ms-5 text-white-light"
             severity="success"

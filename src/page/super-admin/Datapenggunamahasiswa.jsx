@@ -102,6 +102,8 @@ const Datapenggunamahasiswa = () => {
   const [deleteStudent] = useMutation(DELETE_STUDENT);
   const [updateStudent] = useMutation(UPDATE_STUDENT);
   const [displayDialog, setDisplayDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [deleteStudentId, setDeleteStudentId] = useState(null);
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
@@ -189,6 +191,13 @@ const Datapenggunamahasiswa = () => {
     setNotificationMessage("Berhasil menghapus data");
     setNotification(true);
     setTimeout(() => setNotification(false), 2000);
+    setDeleteConfirmDialog(false);
+    setDeleteStudentId(null);
+  };
+
+  const confirmDeleteStudent = (id) => {
+    setDeleteStudentId(id);
+    setDeleteConfirmDialog(true);
   };
 
   // Handle edit user
@@ -247,7 +256,7 @@ const Datapenggunamahasiswa = () => {
       <Button
         icon="pi pi-trash"
         className="p-button-rounded p-button-danger bg-red-maron text-white-light"
-        onClick={() => handleDeleteStudent(rowData.id)}
+        onClick={() => confirmDeleteStudent(rowData.id)}
       />
     </div>
   );
@@ -514,6 +523,36 @@ const Datapenggunamahasiswa = () => {
             label="Simpan"
             icon="pi pi-check"
             onClick={handleSubmit}
+            autoFocus
+            className="bg-green-light py-2 px-4 ms-5 text-white-light"
+            severity="success"
+          />
+        </div>
+      </Dialog>
+
+      <Dialog
+        header="Konfirmasi Hapus"
+        visible={deleteConfirmDialog}
+        onHide={() => setDeleteConfirmDialog(false)}
+        draggable={false}
+        className="centered-dialog"
+        style={{ width: "30%" }}
+      >
+        <div className="flex justify-center mt-5">
+          <p>Apakah Anda yakin ingin menghapus akun mahasiswa berikut?</p>
+        </div>
+        <div className="flex justify-center mt-5">
+          <Button
+            label="Batal"
+            icon="pi pi-times"
+            onClick={() => setDeleteConfirmDialog(false)}
+            className="bg-red-maron py-2 px-4 text-white-light"
+            severity="danger"
+          />
+          <Button
+            label="Hapus"
+            icon="pi pi-check"
+            onClick={() => handleDeleteStudent(deleteStudentId)}
             autoFocus
             className="bg-green-light py-2 px-4 ms-5 text-white-light"
             severity="success"

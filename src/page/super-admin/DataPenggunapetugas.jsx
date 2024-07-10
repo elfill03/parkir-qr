@@ -13,8 +13,8 @@ import "primereact/resources/primereact.min.css";
 import "primereact/resources/themes/saga-blue/theme.css";
 import React, { useState } from "react";
 import { BsPlus } from "react-icons/bs";
-import { Notification, Profilebar, Sidebar } from "../../components";
 import { img7 } from "../../assets";
+import { Notification, Profilebar, Sidebar } from "../../components";
 
 // Get data Graphql Query
 const GET_USERS = gql`
@@ -86,6 +86,9 @@ const DataPenggunapetugas = () => {
   const [updateUser] = useMutation(UPDATE_USER);
 
   const [displayDialog, setDisplayDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
   const numberBodyTemplate = (rowData, { rowIndex }) => rowIndex + 1;
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState(false);
@@ -140,6 +143,13 @@ const DataPenggunapetugas = () => {
     setNotificationMessage("Berhasil menghapus data");
     setNotification(true);
     setTimeout(() => setNotification(false), 2000);
+    setDeleteConfirmDialog(false);
+    setDeleteUserId(null);
+  };
+
+  const confirmDeleteUser = (id) => {
+    setDeleteUserId(id);
+    setDeleteConfirmDialog(true);
   };
 
   const handleEditUser = (user) => {
@@ -199,7 +209,7 @@ const DataPenggunapetugas = () => {
       <Button
         icon="pi pi-trash"
         className="p-button-rounded p-button-danger bg-red-maron text-white-light"
-        onClick={() => handleDeleteUser(rowData.id)}
+        onClick={() => confirmDeleteUser(rowData.id)}
       />
     </div>
   );
@@ -245,6 +255,11 @@ const DataPenggunapetugas = () => {
     setIsEditMode(false);
   };
 
+  const closeNotification = () => {
+    setNotification(false);
+    setNotificationMessage("");
+  };
+
   const header = (
     <div className="flex justify-content-between">
       <Button
@@ -266,28 +281,7 @@ const DataPenggunapetugas = () => {
       </span>
     </div>
   );
-
-  // Responsive dialog
-  React.useEffect(() => {
-    const updateDialogWidth = () => {
-      if (window.innerWidth <= 680) {
-        setDialogWidth("80%");
-      } else {
-        setDialogWidth("30%");
-      }
-    };
-
-    window.addEventListener("resize", updateDialogWidth);
-    updateDialogWidth();
-
-    return () => window.removeEventListener("resize", updateDialogWidth);
-  }, []);
-
-  const closeNotification = () => {
-    setNotification(false);
-    setNotificationMessage("");
-  };
-
+  
   return (
     <>
       <div className="flex">
@@ -436,6 +430,36 @@ const DataPenggunapetugas = () => {
             label="Simpan"
             icon="pi pi-check"
             onClick={handleSubmit}
+            autoFocus
+            className="bg-green-light py-2 px-4 ms-5 text-white-light"
+            severity="success"
+          />
+        </div>
+      </Dialog>
+
+      <Dialog
+        header="Konfirmasi Hapus"
+        visible={deleteConfirmDialog}
+        onHide={() => setDeleteConfirmDialog(false)}
+        draggable={false}
+        className="centered-dialog"
+        style={{ width: "30%" }}
+      >
+        <div className="flex justify-center mt-5">
+          <p>Apakah Anda yakin ingin menghapus akun petugas berikut?</p>
+        </div>
+        <div className="flex justify-center mt-5">
+          <Button
+            label="Batal"
+            icon="pi pi-times"
+            onClick={() => setDeleteConfirmDialog(false)}
+            className="bg-red-maron py-2 px-4 text-white-light"
+            severity="danger"
+          />
+          <Button
+            label="Hapus"
+            icon="pi pi-check"
+            onClick={() => handleDeleteUser(deleteUserId)}
             autoFocus
             className="bg-green-light py-2 px-4 ms-5 text-white-light"
             severity="success"
