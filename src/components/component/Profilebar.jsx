@@ -6,18 +6,23 @@ import {
   MenuItems,
   Transition,
 } from "@headlessui/react";
-import bcrypt from "bcryptjs";
-import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import bcrypt from "bcryptjs"; // Assuming you're using bcryptjs for password hashing
+import {
+  deleteObject,
+  getDownloadURL,
+  ref,
+  uploadBytes,
+} from "firebase/storage";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { Password } from "primereact/password";
 import { ProgressSpinner } from "primereact/progressspinner";
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { img7 } from "../../assets";
-import { storage } from "../../config/firebase/firebaseConfig";
 import { Notification } from "../../components";
+import { storage } from "../../config/firebase/firebaseConfig";
 
 const GET_USER_DATA = gql`
   query GetUserData($userId: Int!) {
@@ -26,6 +31,7 @@ const GET_USER_DATA = gql`
       nama
       email
       role_id
+      password
       mahasiswas {
         NIM
       }
@@ -35,14 +41,10 @@ const GET_USER_DATA = gql`
 `;
 
 const UPDATE_USER_PROFILE = gql`
-  mutation UpdateUserProfile(
-    $id: Int!
-    $password: String
-    $foto_profile: String
-  ) {
+  mutation UpdateUserProfile($id: Int!, $foto_profile: String) {
     update_users_by_pk(
       pk_columns: { id: $id }
-      _set: { password: $password, foto_profile: $foto_profile }
+      _set: { foto_profile: $foto_profile }
     ) {
       id
       nama
@@ -52,15 +54,30 @@ const UPDATE_USER_PROFILE = gql`
   }
 `;
 
+const CHANGE_USER_PASSWORD = gql`
+  mutation ChangeUserPassword($id: Int!, $password: String!) {
+    update_users_by_pk(pk_columns: { id: $id }, _set: { password: $password }) {
+      id
+      nama
+    }
+  }
+`;
+
 const Profilebar = () => {
   const userId = JSON.parse(localStorage.getItem("user")).id;
   const navigate = useNavigate();
   const [profileDialogVisible, setProfileDialogVisible] = useState(false);
   const [editDialogVisible, setEditDialogVisible] = useState(false);
+  const [passwordDialogVisible, setPasswordDialogVisible] = useState(false);
   const [notification, setNotification] = useState(false);
+  const [notificationMessage, setNotificationMessage] = useState("");
   const [newProfile, setNewProfile] = useState({
-    password: "",
     foto_profile: null,
+  });
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
   const [loadingUpdate, setLoadingUpdate] = useState(false);
   const [errors, setErrors] = useState({});
@@ -69,11 +86,38 @@ const Profilebar = () => {
     variables: { userId },
   });
 
+  useEffect(() => {
+    if (data && data.users_by_pk) {
+      setPasswordData((prev) => ({
+        ...prev,
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      }));
+    }
+  }, [data]);
+
   const [updateUserProfile] = useMutation(UPDATE_USER_PROFILE, {
     onCompleted: () => {
       setLoadingUpdate(false);
       setEditDialogVisible(false);
+      setNotificationMessage("Berhasil mengubah foto profile");
       setNotification(true);
+      setErrors({});
+    },
+    onError: (error) => {
+      console.error(error);
+      setLoadingUpdate(false);
+    },
+  });
+
+  const [changeUserPassword] = useMutation(CHANGE_USER_PASSWORD, {
+    onCompleted: () => {
+      setLoadingUpdate(false);
+      setPasswordDialogVisible(false);
+      setNotificationMessage("Berhasil mengubah password");
+      setNotification(true);
+      setErrors({});
     },
     onError: (error) => {
       console.error(error);
@@ -94,12 +138,23 @@ const Profilebar = () => {
     setEditDialogVisible(true);
   };
 
+  const handleChangePasswordClick = () => {
+    setPasswordDialogVisible(true);
+  };
+
   const handleCloseDialog = () => {
     setProfileDialogVisible(false);
+    setErrors({});
   };
 
   const handleCloseEditDialog = () => {
     setEditDialogVisible(false);
+    setErrors({});
+  };
+
+  const handleClosePasswordDialog = () => {
+    setPasswordDialogVisible(false);
+    setErrors({});
   };
 
   const closeNotification = () => {
@@ -107,19 +162,20 @@ const Profilebar = () => {
   };
 
   const handleInputChange = (e) => {
-    const { name, value, files } = e.target;
+    const { name, files, value } = e.target;
     if (name === "foto_profile") {
       setNewProfile((prev) => ({ ...prev, [name]: files[0] }));
     } else {
-      setNewProfile((prev) => ({ ...prev, [name]: value }));
+      setPasswordData((prev) => ({ ...prev, [name]: value }));
     }
   };
 
   const handleEditProfile = async () => {
     const newErrors = {};
-    if (!newProfile.password) {
-      newErrors.password = "Password harus diisi";
+    if (!newProfile.foto_profile) {
+      newErrors.foto_profile = "Foto profil harus diisi";
     }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
@@ -129,6 +185,15 @@ const Profilebar = () => {
     let foto_profile_url = data.users_by_pk.foto_profile;
 
     if (newProfile.foto_profile) {
+      // Delete old profile photo
+      if (foto_profile_url) {
+        const oldPhotoRef = ref(storage, foto_profile_url);
+        await deleteObject(oldPhotoRef).catch((error) => {
+          console.error("Error deleting old profile photo:", error);
+        });
+      }
+
+      // Upload new profile photo
       const storageRef = ref(
         storage,
         `profile_pictures/${userId}_${Date.now()}`
@@ -137,18 +202,60 @@ const Profilebar = () => {
       foto_profile_url = await getDownloadURL(storageRef);
     }
 
-    let hashedPassword = data.users_by_pk.password;
-    if (newProfile.password) {
-      hashedPassword = await bcrypt.hash(newProfile.password, 10);
-    }
-
     await updateUserProfile({
       variables: {
         id: userId,
-        password: hashedPassword,
         foto_profile: foto_profile_url,
       },
     });
+  };
+
+  const handleChangePassword = async () => {
+    const newErrors = {};
+    if (!passwordData.currentPassword) {
+      newErrors.currentPassword = "Password saat ini harus diisi";
+    }
+    if (!passwordData.newPassword) {
+      newErrors.newPassword = "Password baru harus diisi";
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      newErrors.confirmPassword = "Konfirmasi password tidak sesuai";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setLoadingUpdate(true);
+
+    // Add logic to verify the current password here
+    // Assuming `data.users_by_pk.password` contains the hashed password
+    if (data && data.users_by_pk && data.users_by_pk.password) {
+      const currentHashedPassword = data.users_by_pk.password;
+      const isCurrentPasswordValid = await bcrypt.compare(
+        passwordData.currentPassword,
+        currentHashedPassword
+      );
+
+      if (!isCurrentPasswordValid) {
+        setErrors({ currentPassword: "Password saat ini salah" });
+        setLoadingUpdate(false);
+        return;
+      }
+
+      const newHashedPassword = await bcrypt.hash(passwordData.newPassword, 10);
+
+      await changeUserPassword({
+        variables: {
+          id: userId,
+          password: newHashedPassword,
+        },
+      });
+    } else {
+      setErrors({ currentPassword: "Data pengguna tidak ditemukan" });
+      setLoadingUpdate(false);
+    }
   };
 
   if (error) return <p>Error: {error.message}</p>;
@@ -165,7 +272,7 @@ const Profilebar = () => {
             <img
               className="h-10 w-10 rounded-full"
               src={user?.foto_profile ?? img7}
-              alt="photo profile"
+              alt="foto profile"
             />
 
             <h1 className="text-black ms-4">{user?.nama || "Admin"}</h1>
@@ -223,7 +330,7 @@ const Profilebar = () => {
             </div>
           ) : (
             <>
-              <h1 className="text-lg font-bold">Photo Profile</h1>
+              <h1 className="text-lg font-bold">Foto Profile</h1>
               <img
                 src={user?.foto_profile ?? img7}
                 alt="Profile"
@@ -245,9 +352,14 @@ const Profilebar = () => {
               )}
 
               <Button
-                label="Edit Profile"
+                label="Edit Foto Profile"
                 className="bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-center"
                 onClick={handleEditProfileClick}
+              />
+              <Button
+                label="Ubah Password"
+                className="bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-center"
+                onClick={handleChangePasswordClick}
               />
             </>
           )}
@@ -268,34 +380,22 @@ const Profilebar = () => {
             </div>
           ) : (
             <>
-              <h1 className="text-lg font-bold">Edit Profile</h1>
+              <h1 className="text-lg font-bold">Edit Foto Profile</h1>
               <div className="p-field">
-                <label htmlFor="foto_profile">Photo Profile</label>
+                <label htmlFor="foto_profile">Foto Profile</label>
                 <InputText
                   id="foto_profile"
                   name="foto_profile"
                   type="file"
                   onChange={handleInputChange}
-                  className={`w-full input-border `}
-                />
-              </div>
-              <div className="p-field w-full">
-                <label htmlFor="password">Password</label>
-                <Password
-                  id="password"
-                  name="password"
-                  value={newProfile.password}
-                  onChange={handleInputChange}
-                  toggleMask
                   className={`w-full input-border ${
-                    errors.password ? "p-invalid" : ""
+                    errors.foto_profile ? "p-invalid" : ""
                   }`}
                 />
-                {errors.password && (
-                  <small className="p-error">{errors.password}</small>
+                {errors.foto_profile && (
+                  <small className="p-error">{errors.foto_profile}</small>
                 )}
               </div>
-
               <button
                 className="bg-green-500 hover:bg-green-700 text-white py-2 px-4 rounded mt-4"
                 onClick={handleEditProfile}
@@ -306,8 +406,85 @@ const Profilebar = () => {
           )}
         </div>
       </Dialog>
+
+      <Dialog
+        header="Ubah Password"
+        visible={passwordDialogVisible}
+        onHide={handleClosePasswordDialog}
+        draggable={false}
+        className="centered-dialog w-11/12 sm:w-96 max-w-full p-0 bg-white rounded-lg shadow-lg"
+      >
+        <div className="p-4 flex flex-col items-center space-y-4">
+          {loadingUpdate ? (
+            <div className="flex justify-center items-center h-32">
+              <ProgressSpinner />
+            </div>
+          ) : (
+            <>
+              <div className="p-field">
+                <label htmlFor="currentPassword">Password Saat Ini</label>
+                <Password
+                  id="currentPassword"
+                  name="currentPassword"
+                  value={passwordData.currentPassword}
+                  onChange={handleInputChange}
+                  className={`w-full input-border ${
+                    errors.currentPassword ? "p-invalid" : ""
+                  }`}
+                  toggleMask
+                  feedback={false}
+                />
+                {errors.currentPassword && (
+                  <small className="p-error">{errors.currentPassword}</small>
+                )}
+              </div>
+              <div className="p-field">
+                <label htmlFor="newPassword">Password Baru</label>
+                <Password
+                  id="newPassword"
+                  name="newPassword"
+                  value={passwordData.newPassword}
+                  onChange={handleInputChange}
+                  className={`w-full input-border ${
+                    errors.newPassword ? "p-invalid" : ""
+                  }`}
+                  toggleMask
+                  feedback={false}
+                />
+                {errors.newPassword && (
+                  <small className="p-error">{errors.newPassword}</small>
+                )}
+              </div>
+              <div className="p-field">
+                <label htmlFor="confirmPassword">Konfirmasi Password</label>
+                <Password
+                  id="confirmPassword"
+                  name="confirmPassword"
+                  value={passwordData.confirmPassword}
+                  onChange={handleInputChange}
+                  className={`w-full input-border ${
+                    errors.confirmPassword ? "p-invalid" : ""
+                  }`}
+                  toggleMask
+                  feedback={false}
+                />
+                {errors.confirmPassword && (
+                  <small className="p-error">{errors.confirmPassword}</small>
+                )}
+              </div>
+              <button
+                className="bg-green-500 hover:bg-green-700 text-white py-2 px-4 rounded mt-4"
+                onClick={handleChangePassword}
+              >
+                Ubah Password
+              </button>
+            </>
+          )}
+        </div>
+      </Dialog>
+
       <Notification
-        message="Berhasil mengubah profil"
+        message={notificationMessage}
         visible={notification}
         onClose={closeNotification}
       />
