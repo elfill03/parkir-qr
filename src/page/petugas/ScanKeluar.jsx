@@ -66,12 +66,10 @@ const ScanKeluar = () => {
         }
         setNotification(true);
       } catch (error) {
-        console.error("Error processing scan data:", error);
         setNotificationMessage("Gagal memproses scan keluar.");
         setNotification(true);
       }
     } else if (error) {
-      console.error("QR Code scan error:", error);
     }
   };
 

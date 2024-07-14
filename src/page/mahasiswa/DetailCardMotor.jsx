@@ -150,7 +150,6 @@ const DetailCardMotor = () => {
       const canvas = qrRef.current?.querySelector("canvas");
 
       if (!canvas) {
-        console.error("QR code canvas not found.");
         setNotificationMessage("QR code canvas not found.");
         setNotification(true);
         return;
@@ -173,7 +172,6 @@ const DetailCardMotor = () => {
         setNotificationMessage("Berhasil menyimpan QR code.");
         setQRCodeUrl(downloadUrl);
       } catch (error) {
-        console.error("Error saving QR code:", error);
         setNotificationMessage("Gagal menyimpan QR code.");
       } finally {
         setNotification(true);
@@ -183,36 +181,40 @@ const DetailCardMotor = () => {
   };
 
   const handleCheckBiaya = () => {
-    if (riwayatData && tarifData) {
+    if (riwayatData && tarifData && parkirInapData) {
       const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
       const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
       const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
 
-      // Default status_parkir is "Reguler"
       let statusParkir = "Reguler";
+      let biaya = tarifData.tarif[0].tarif_harga; // Default to tarif_harga for Reguler
 
-      // Check if the card_motor has an approved "Parkir Inap" within the date range
-      const today = new Date().toISOString().split("T")[0]; // Get today's date in yyyy-mm-dd format
+      const today = new Date().toISOString().split("T")[0];
 
       for (const parkirInap of parkirInapData.parkir_inaps) {
         if (
           parkirInap.status_pengajuan === "Diterima" &&
           parkirInap.tanggal_masuk <= today &&
-          parkirInap.tanggal_keluar >= today
+          parkirInap.tanggal_keluar >= today &&
+          parkirInap.card_motor_id === parseInt(cardId)
         ) {
           statusParkir = "Parkir Inap";
-          biaya = tarifData.tarif[0].biaya_inap;
           break;
         }
       }
 
-      // Check if duration exceeds 24 hours for "Reguler" status or exceeds "Parkir Inap" end date
-      if (statusParkir === "Reguler" && duration > 24) {
-        biaya = tarifData.tarif[0].harga_denda;
-      } else if (
-        statusParkir === "Parkir Inap" &&
-        new Date() > new Date(parkirInapData.parkir_inaps[0].tanggal_keluar)
-      ) {
+      if (statusParkir === "Parkir Inap") {
+        biaya = tarifData.tarif[0].biaya_inap;
+        const parkirInapRecord = parkirInapData.parkir_inaps.find(
+          (record) =>
+            record.card_motor_id === parseInt(cardId) &&
+            record.status_pengajuan === "Diterima" &&
+            new Date() > new Date(record.tanggal_keluar)
+        );
+        if (parkirInapRecord) {
+          biaya = tarifData.tarif[0].harga_denda;
+        }
+      } else if (statusParkir === "Reguler" && duration > 24) {
         biaya = tarifData.tarif[0].harga_denda;
       }
 
@@ -301,7 +303,6 @@ const DetailCardMotor = () => {
           navigate("/scan-keluar-parkir");
         }, 2000);
       } catch (error) {
-        console.error("Error updating payment status:", error);
         setNotificationMessage("Gagal mengupdate status pembayaran.");
         setNotification(true);
       }
@@ -357,11 +358,11 @@ const DetailCardMotor = () => {
                     Kembali
                   </button>
                   <button
-                      className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
-                      onClick={handleGenerateQRCode}
-                    >
-                      Generate QR Code
-                    </button>
+                    className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
+                    onClick={handleGenerateQRCode}
+                  >
+                    Generate QR Code
+                  </button>
                 </div>
               )}
               {roleId === 2 && (
@@ -369,6 +370,13 @@ const DetailCardMotor = () => {
                   className="flex justify-center mt-4 text-sm space-x-4"
                   style={{ width: "90%" }}
                 >
+                  <button
+                    onClick={() => navigate(-1)}
+                    className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
+                  >
+                    <BsChevronLeft className="my-auto" />
+                    Kembali
+                  </button>
                   <button
                     className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
                     onClick={handleCheckBiaya}
