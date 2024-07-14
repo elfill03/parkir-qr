@@ -327,7 +327,7 @@ const ListCardMotor = () => {
   }, []);
 
   return (
-    <div className="flex">
+    <div >
       {roleId === 1 && (
         <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
           <Profilebar />
@@ -406,9 +406,9 @@ const ListCardMotor = () => {
         </div>
       )}
       {roleId === 3 && (
-        <div className="flex">
+        <div >
           <Sidebarmahasiswa />
-          <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
+          <div className="flex flex-col bg-white-maron flex-grow min-w-screen min-h-screen">
             <Profilebar />
             <center>
               <div className="mb-5">
@@ -491,14 +491,6 @@ const ListCardMotor = () => {
                             Detail card motor
                           </button>
                         </div>
-                        <button
-                          onClick={() =>
-                            printQRCode(card.foto_QR_Code, NIM, card.id)
-                          }
-                          className="bg-red-maron hover:bg-red-700 text-white p-2 rounded ml-2"
-                        >
-                          Print QR Code
-                        </button>
                       </div>
                     </div>
                   ))}

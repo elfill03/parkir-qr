@@ -10,6 +10,7 @@ const GET_TARIFF = gql`
     tarif {
       tarif_harga
       harga_denda
+      biaya_inap
     }
   }
 `;
@@ -21,10 +22,12 @@ const TarifParkir = () => {
 
   let newTarifHarga = 0;
   let newHargaDenda = 0;
+  let newBiayaInap = 0;
 
   if (data && data.tarif.length > 0) {
     newTarifHarga = data.tarif[0].tarif_harga;
     newHargaDenda = data.tarif[0].harga_denda;
+    newBiayaInap = data.tarif[0].biaya_inap;
   }
 
   return (
@@ -65,6 +68,12 @@ const TarifParkir = () => {
                       </h1>
                     </div>
                     <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
+                      <h1 className="w-24">Biaya Inap</h1>
+                      <h1 className="w-24">
+                        : Rp. {newBiayaInap.toLocaleString("id-ID")}
+                      </h1>
+                    </div>
+                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
                       <h1 className="w-24">Denda</h1>
                       <h1 className="w-24">
                         : Rp. {newHargaDenda.toLocaleString("id-ID")}
@@ -78,7 +87,7 @@ const TarifParkir = () => {
                     Peringatan!
                   </span>{" "}
                   apabila mahasiswa parkir dengan jangka waktu lebih dari 24 jam
-                  maka akan dikenakan denda.
+                  tanpa mengajukan parkir inap maka akan dikenakan denda.
                 </p>
               </div>
             </div>

@@ -1,6 +1,7 @@
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { Button } from "primereact/button";
+import { Calendar } from "primereact/calendar";
 import { Column } from "primereact/column";
 import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
@@ -128,11 +129,11 @@ const ParkirInap = () => {
       },
       tanggal_masuk: {
         operator: FilterOperator.AND,
-        constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
       },
       tanggal_keluar: {
         operator: FilterOperator.AND,
-        constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
+        constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
       },
       status_pengajuan: {
         operator: FilterOperator.AND,
@@ -150,10 +151,18 @@ const ParkirInap = () => {
     setGlobalFilterValue(value);
   };
 
+  const onDateFilterChange = (e, field) => {
+    const value = e.value;
+    let _filters = { ...filters };
+    _filters[field].constraints[0].value = value
+      ? value.toISOString().split("T")[0]
+      : null;
+    setFilters(_filters);
+  };
+
   const formatDate = (isoDate) => {
     if (!isoDate) return "Belum ada tanggal";
     const date = new Date(isoDate);
-    // Adjust timezone
     date.setHours(date.getHours() - 7);
     const formattedDate = `${date.getDate()}-${
       date.getMonth() + 1
@@ -382,7 +391,12 @@ const ParkirInap = () => {
                     filter
                     filterField="tanggal_masuk"
                     filterElement={
-                      <InputText type="date" onChange={onGlobalFilterChange} />
+                      <Calendar
+                        value={filters.tanggal_masuk?.constraints[0].value}
+                        onChange={(e) => onDateFilterChange(e, "tanggal_masuk")}
+                        dateFormat="yy-mm-dd"
+                        placeholder="Filter by date"
+                      />
                     }
                     style={{ width: "15%", color: "black" }}
                   />
@@ -394,7 +408,14 @@ const ParkirInap = () => {
                     filter
                     filterField="tanggal_keluar"
                     filterElement={
-                      <InputText type="date" onChange={onGlobalFilterChange} />
+                      <Calendar
+                        value={filters.tanggal_keluar?.constraints[0].value}
+                        onChange={(e) =>
+                          onDateFilterChange(e, "tanggal_keluar")
+                        }
+                        dateFormat="yy-mm-dd"
+                        placeholder="Filter by date"
+                      />
                     }
                     style={{ width: "15%", color: "black" }}
                   />
