@@ -13,6 +13,7 @@ import "primereact/resources/primereact.min.css";
 import "primereact/resources/themes/saga-blue/theme.css";
 import React, { useState } from "react";
 import { BsPlus } from "react-icons/bs";
+import { useNavigate } from "react-router-dom";
 import { img7 } from "../../assets";
 import { Notification, Profilebar, Sidebar } from "../../components";
 
@@ -118,6 +119,7 @@ const Datapenggunamahasiswa = () => {
 
   const [filters, setFilters] = useState(null);
   const [globalFilterValue, setGlobalFilterValue] = useState("");
+  const navigate = useNavigate();
 
   const initFilters = () => {
     setFilters({
@@ -250,13 +252,18 @@ const Datapenggunamahasiswa = () => {
     <div className="flex justify-center space-x-1">
       <Button
         icon="pi pi-pencil"
-        className="p-button-rounded p-button-success bg-red-maron text-white-light"
+        className="p-button-rounded p-button-success bg-red-maron hover:bg-red-700 text-white-light"
         onClick={() => handleEditStudent(rowData)}
       />
       <Button
         icon="pi pi-trash"
-        className="p-button-rounded p-button-danger bg-red-maron text-white-light"
+        className="p-button-rounded p-button-danger bg-red-maron hover:bg-red-700 text-white-light"
         onClick={() => confirmDeleteStudent(rowData.id)}
+      />
+      <Button
+        icon="pi pi-list"
+        className="p-button-rounded p-button-danger bg-red-maron hover:bg-red-700 text-white-light"
+        onClick={() => navigate(`/list-card-motor/${rowData.id}`)}
       />
     </div>
   );

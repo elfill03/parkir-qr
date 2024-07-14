@@ -5,6 +5,8 @@ export { default as Riwayatkeluar } from "./super-admin/RiwayatScanKeluar";
 export { default as Riwayatmasuk } from "./super-admin/RiwayatScanMasuk";
 export { default as Tarif } from "./super-admin/Tarifharga";
 export { default as Tarifparkirmahasiswa } from "./mahasiswa/Tarifparkir";
+export { default as ParkirInap } from "./mahasiswa/ParkirInap";
+export { default as ListParkirInap } from "./super-admin/ListParkirInap";
 export { default as Listcardmotor } from "./mahasiswa/ListCardMotor";
 export { default as Detailcardmotor } from "./mahasiswa/DetailCardMotor";
 export { default as Login } from "./login/login";

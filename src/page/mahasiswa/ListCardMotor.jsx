@@ -5,11 +5,12 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
+import jsPDF from "jspdf";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { ProgressSpinner } from "primereact/progressspinner";
 import React, { useState } from "react";
-import { BsPencilSquare, BsTrash } from "react-icons/bs";
+import { BsChevronLeft, BsPencilSquare, BsTrash } from "react-icons/bs";
 import { useNavigate, useParams } from "react-router-dom";
 import { Notification, Profilebar, Sidebarmahasiswa } from "../../components";
 import { storage } from "../../config/firebase/firebaseConfig";
@@ -82,6 +83,9 @@ const ListCardMotor = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const roleId = user?.role_id;
+
   const { loading, error, data, refetch } = useQuery(GET_USER_CARDS, {
     variables: { userId: parseInt(userId) },
   });
@@ -103,6 +107,7 @@ const ListCardMotor = () => {
 
   const cardMotors = data?.users_by_pk?.mahasiswas[0]?.card_motors || [];
   const mahasiswaId = data?.users_by_pk?.mahasiswas[0]?.id || null;
+  const NIM = data?.users_by_pk?.mahasiswas[0]?.NIM || null;
 
   const handleSubmit = async () => {
     if (cardMotors.length >= 3) {
@@ -267,6 +272,44 @@ const ListCardMotor = () => {
     setNotification(false);
   };
 
+  const printQRCode = async (qrCodeUrl, NIM, cardMotorId) => {
+    try {
+      const response = await fetch(qrCodeUrl);
+      const blob = await response.blob();
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const base64data = event.target.result;
+        const doc = new jsPDF();
+
+        // Add title
+        doc.setFontSize(20);
+        doc.text("QR Code Card Motor", 105, 20, { align: "center" });
+
+        // Add QR code image
+        const imgProps = {
+          width: 50, // 10 cm in points (283 points)
+          height: 50,
+          x: (doc.internal.pageSize.getWidth() - 50) / 2, // Center the image horizontally
+          y: 30, // Position below the title
+        };
+
+        doc.addImage(
+          base64data,
+          "PNG",
+          imgProps.x,
+          imgProps.y,
+          imgProps.width,
+          imgProps.height
+        );
+        const fileName = `QRCode ${NIM} - ${cardMotorId}.pdf`;
+        doc.save(fileName);
+      };
+      reader.readAsDataURL(blob);
+    } catch (error) {
+      console.error("Error printing QR code:", error);
+    }
+  };
+
   // Responsive dialog
   React.useEffect(() => {
     const updateDialogWidth = () => {
@@ -285,94 +328,186 @@ const ListCardMotor = () => {
 
   return (
     <div className="flex">
-      <Sidebarmahasiswa />
-      <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
-        <Profilebar />
-        <center>
-          <div className="mb-5">
-            <div className="flex" style={{ width: "90%" }}>
-              <h1 className="font-semibold text-2xl">List Card Motor</h1>
-              <button
-                className="bg-red-maron hover:bg-red-700 text-white-light ml-auto flex items-center px-3 py-2 rounded-lg"
-                onClick={() => setDisplayDialog(true)}
-              >
-                Buat card
-              </button>
+      {roleId === 1 && (
+        <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
+          <Profilebar />
+          <center>
+            <div className="mb-5">
+              <div className="flex" style={{ width: "90%" }}>
+                <h1 className="font-semibold text-2xl">List Card Motor</h1>
+                <button
+                  onClick={() => navigate(-1)}
+                  className=" bg-red-maron hover:bg-red-700 text-white-light ml-auto flex items-center px-3 py-2 rounded-lg"
+                >
+                  <BsChevronLeft className="my-auto text-xl" />
+                  Kembali
+                </button>
+              </div>
+              <hr
+                className="mb-5 bg-grey-maron pt-1 mt-2"
+                style={{ width: "90%" }}
+              />
             </div>
-            <hr
-              className="mb-5 bg-grey-maron pt-1 mt-2"
-              style={{ width: "90%" }}
-            />
-          </div>
-        </center>
-        <center className="mt-5 mx-auto" style={{ width: "90%" }}>
-          {loading ? (
-            <div className="flex justify-center items-center h-32">
-              <ProgressSpinner />
-            </div>
-          ) : error ? (
-            <p>Error: {error.message}</p>
-          ) : cardMotors.length === 0 ? (
-            <div className="flex justify-center items-center h-32">
-              <p className="text-xl font-semibold">
-                Anda tidak memiliki card motor, silahkan buat terlebih dahulu
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-wrap justify-center xl:justify-start">
-              {cardMotors.map((card, index) => (
-                <div key={card.id} className="mb-5 mx-10 p-2">
-                  <div className="p-5 bg-white-light shadow-2xl rounded-xl">
-                    <img
-                      className="w-64 h-48 mb-5"
-                      src={card.foto_motor}
-                      alt="motorcycle"
-                    />
-                    <h1 className="text-lg font-semibold mb-1">
-                      Card Motor {index + 1}
-                    </h1>
-                    <hr className="mb-2 bg-red-maron pt-1" />
-                    <div
-                      className="flex justify-center text-sm space-x-4"
-                      style={{ width: "90%" }}
-                    >
-                      <button
-                        className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
-                        onClick={() => {
-                          setSelectedCard(card);
-                          setEditDialog(true);
-                        }}
-                      >
-                        <BsPencilSquare className="my-auto me-1" />
-                        Edit
-                      </button>
-                      <button
-                        className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
-                        onClick={() => confirmDeleteCard(card.id)}
-                      >
-                        <BsTrash className="my-auto me-1" />
-                        Hapus
-                      </button>
-                    </div>
-                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
+          </center>
+          <center className="mt-5 mx-auto" style={{ width: "90%" }}>
+            {loading ? (
+              <div className="flex justify-center items-center h-32">
+                <ProgressSpinner />
+              </div>
+            ) : error ? (
+              <p>Error: {error.message}</p>
+            ) : cardMotors.length === 0 ? (
+              <div className="flex justify-center items-center h-32">
+                <p className="text-xl font-semibold">
+                  Mahasiswa ini tidak memiliki card motor
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap justify-center xl:justify-start">
+                {cardMotors.map((card, index) => (
+                  <div key={card.id} className="mb-5 mx-10 p-2">
+                    <div className="p-5 bg-white-light shadow-2xl rounded-xl">
+                      <img
+                        className="w-64 h-48 mb-5"
+                        src={card.foto_motor}
+                        alt="motorcycle"
+                      />
+                      <h1 className="text-lg font-semibold mb-1">
+                        Card Motor {index + 1}
+                      </h1>
+                      <hr className="mb-2 bg-red-maron pt-1" />
+
+                      <div className="flex mb-2 mt-4 w-full text-start justify-center text-base font-semibold">
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/list-card-motor/${userId}/detail-card-motor/${card.id}`
+                            )
+                          }
+                          className="bg-red-maron hover:bg-red-700 text-white p-2 rounded"
+                        >
+                          Detail card motor
+                        </button>
+                      </div>
                       <button
                         onClick={() =>
-                          navigate(
-                            `/list-card-motor/${userId}/detail-card-motor/${card.id}`
-                          )
+                          printQRCode(card.foto_QR_Code, NIM, card.id)
                         }
-                        className="bg-red-maron hover:bg-red-700 text-white p-2 rounded"
+                        className="bg-red-maron hover:bg-red-700 text-white p-2 rounded ml-2"
                       >
-                        Detail card motor
+                        Print QR Code
                       </button>
                     </div>
                   </div>
+                ))}
+              </div>
+            )}
+          </center>
+        </div>
+      )}
+      {roleId === 3 && (
+        <div className="flex">
+          <Sidebarmahasiswa />
+          <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
+            <Profilebar />
+            <center>
+              <div className="mb-5">
+                <div className="flex" style={{ width: "90%" }}>
+                  <h1 className="font-semibold text-2xl">List Card Motor</h1>
+                  <button
+                    className="bg-red-maron hover:bg-red-700 text-white-light ml-auto flex items-center px-3 py-2 rounded-lg"
+                    onClick={() => setDisplayDialog(true)}
+                  >
+                    Buat card
+                  </button>
                 </div>
-              ))}
-            </div>
-          )}
-        </center>
-      </div>
+                <hr
+                  className="mb-5 bg-grey-maron pt-1 mt-2"
+                  style={{ width: "90%" }}
+                />
+              </div>
+            </center>
+            <center className="mt-5 mx-auto" style={{ width: "90%" }}>
+              {loading ? (
+                <div className="flex justify-center items-center h-32">
+                  <ProgressSpinner />
+                </div>
+              ) : error ? (
+                <p>Error: {error.message}</p>
+              ) : cardMotors.length === 0 ? (
+                <div className="flex justify-center items-center h-32">
+                  <p className="text-xl font-semibold">
+                    Anda tidak memiliki card motor, silahkan buat terlebih
+                    dahulu
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-wrap justify-center xl:justify-start">
+                  {cardMotors.map((card, index) => (
+                    <div key={card.id} className="mb-5 mx-10 p-2">
+                      <div className="p-5 bg-white-light shadow-2xl rounded-xl">
+                        <img
+                          className="w-64 h-48 mb-5"
+                          src={card.foto_motor}
+                          alt="motorcycle"
+                        />
+                        <h1 className="text-lg font-semibold mb-1">
+                          Card Motor {index + 1}
+                        </h1>
+                        <hr className="mb-2 bg-red-maron pt-1" />
+
+                        <div
+                          className="flex justify-center text-sm space-x-4"
+                          style={{ width: "90%" }}
+                        >
+                          <button
+                            className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
+                            onClick={() => {
+                              setSelectedCard(card);
+                              setEditDialog(true);
+                            }}
+                          >
+                            <BsPencilSquare className="my-auto me-1" />
+                            Edit
+                          </button>
+                          <button
+                            className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
+                            onClick={() => confirmDeleteCard(card.id)}
+                          >
+                            <BsTrash className="my-auto me-1" />
+                            Hapus
+                          </button>
+                        </div>
+
+                        <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/list-card-motor/${userId}/detail-card-motor/${card.id}`
+                              )
+                            }
+                            className="bg-red-maron hover:bg-red-700 text-white p-2 rounded"
+                          >
+                            Detail card motor
+                          </button>
+                        </div>
+                        <button
+                          onClick={() =>
+                            printQRCode(card.foto_QR_Code, NIM, card.id)
+                          }
+                          className="bg-red-maron hover:bg-red-700 text-white p-2 rounded ml-2"
+                        >
+                          Print QR Code
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </center>
+          </div>
+        </div>
+      )}
 
       {/* Dialog pop up */}
       <Dialog

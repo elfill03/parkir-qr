@@ -55,7 +55,8 @@ const Login = () => {
 
       // Compare password with hash in the database or plain text
       const isPasswordMatch =
-        bcrypt.compareSync(password, user.password) || password === user.password;
+        bcrypt.compareSync(password, user.password) ||
+        password === user.password;
 
       if (isPasswordMatch) {
         const { role_id } = user;
@@ -156,16 +157,6 @@ const Login = () => {
                 Login failed. Please try again.
               </p>
             )}
-            <div className="flex justify-center">
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-red-600 hover:text-red-500"
-                >
-                  Forgot Password?
-                </a>
-              </div>
-            </div>
           </form>
         </div>
 

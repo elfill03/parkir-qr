@@ -44,6 +44,26 @@ const GET_RIWAYAT_PARKIR = gql`
   }
 `;
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="custom-tooltip bg-grey-light p-2 rounded space-y-1">
+        <p className="label">{`Tanggal ${label}`}</p>
+        <p
+          className="intro text-white-light py-1"
+          style={{ backgroundColor: "#8884d8" }}
+        >{`Masuk: ${payload[0].value}`}</p>
+        <p
+          className="intro text-white-light py-1"
+          style={{ backgroundColor: "#82ca9d" }}
+        >{`Keluar: ${payload[1].value}`}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const Dashboard = () => {
   const { data: mahasiswaData } = useQuery(GET_MAHASISWA_COUNT, { client });
   const { data: petugasData } = useQuery(GET_PETUGAS_COUNT, { client });
@@ -199,7 +219,7 @@ const Dashboard = () => {
                         position: "insideLeft",
                       }}
                     />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend verticalAlign="top" align="center" />
                     <Bar dataKey="masuk" fill="#8884d8" name="Masuk" />
                     <Bar dataKey="keluar" fill="#82ca9d" name="Keluar" />
@@ -209,7 +229,6 @@ const Dashboard = () => {
             </div>
           </div>
         </center>
-        {/* <Footer /> */}
       </div>
     </div>
   );

@@ -39,6 +39,19 @@ const GET_RIWAYAT_PARKIR = gql`
     ) {
       scan_masuk
       scan_keluar
+      status_parkir
+    }
+  }
+`;
+
+const GET_PARKIR_INAP = gql`
+  query MyQuery {
+    parkir_inaps {
+      id
+      tanggal_masuk
+      tanggal_keluar
+      status_pengajuan
+      card_motor_id
     }
   }
 `;
@@ -66,6 +79,7 @@ const GET_TARIF_HARGA = gql`
     tarif {
       tarif_harga
       harga_denda
+      biaya_inap
     }
   }
 `;
@@ -98,6 +112,8 @@ const DetailCardMotor = () => {
     variables: { cardMotorId: parseInt(cardId) },
   });
 
+  const { data: parkirInapData } = useQuery(GET_PARKIR_INAP);
+
   const { data: tarifData } = useQuery(GET_TARIF_HARGA);
 
   const [updateCardQRCode] = useMutation(UPDATE_CARD_QR_CODE);
@@ -112,16 +128,9 @@ const DetailCardMotor = () => {
 
   useEffect(() => {
     if (roleId === 2 && riwayatData && tarifData) {
-      const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
-      const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
-      const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
-
-      const biaya =
-        duration > 24
-          ? tarifData.tarif[0].harga_denda
-          : tarifData.tarif[0].tarif_harga;
+      calculateBiaya();
     }
-  }, [riwayatData, tarifData, roleId]);
+  }, [riwayatData, tarifData, parkirInapData, roleId]);
 
   useEffect(() => {
     if (notification) {
@@ -179,13 +188,69 @@ const DetailCardMotor = () => {
       const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
       const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
 
-      const biaya =
-        duration > 24
-          ? tarifData.tarif[0].harga_denda
-          : tarifData.tarif[0].tarif_harga;
+      // Default status_parkir is "Reguler"
+      let statusParkir = "Reguler";
+
+      // Check if the card_motor has an approved "Parkir Inap" within the date range
+      const today = new Date().toISOString().split("T")[0]; // Get today's date in yyyy-mm-dd format
+
+      for (const parkirInap of parkirInapData.parkir_inaps) {
+        if (
+          parkirInap.status_pengajuan === "Diterima" &&
+          parkirInap.tanggal_masuk <= today &&
+          parkirInap.tanggal_keluar >= today
+        ) {
+          statusParkir = "Parkir Inap";
+          biaya = tarifData.tarif[0].biaya_inap;
+          break;
+        }
+      }
+
+      // Check if duration exceeds 24 hours for "Reguler" status or exceeds "Parkir Inap" end date
+      if (statusParkir === "Reguler" && duration > 24) {
+        biaya = tarifData.tarif[0].harga_denda;
+      } else if (
+        statusParkir === "Parkir Inap" &&
+        new Date() > new Date(parkirInapData.parkir_inaps[0].tanggal_keluar)
+      ) {
+        biaya = tarifData.tarif[0].harga_denda;
+      }
 
       setBiaya(biaya);
       setDisplayPaymentDialog(true);
+    }
+  };
+
+  const calculateBiaya = () => {
+    if (riwayatData && tarifData) {
+      const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
+      const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
+      const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
+
+      let biaya;
+      if (riwayatData.riwayat_scans[0].status_parkir === "Parkir Inap") {
+        const parkirInapRecord = parkirInapData.parkir_inaps.find(
+          (record) =>
+            record.card_motor_id === parseInt(cardId) &&
+            record.status_pengajuan === "Diterima"
+        );
+        if (
+          parkirInapRecord &&
+          scanMasuk >= new Date(parkirInapRecord.tanggal_masuk) &&
+          scanMasuk <= new Date(parkirInapRecord.tanggal_keluar)
+        ) {
+          biaya = tarifData.tarif[0].biaya_inap;
+        } else {
+          biaya = tarifData.tarif[0].harga_denda;
+        }
+      } else {
+        biaya =
+          duration > 24
+            ? tarifData.tarif[0].harga_denda
+            : tarifData.tarif[0].tarif_harga;
+      }
+
+      setBiaya(biaya);
     }
   };
 
@@ -195,10 +260,29 @@ const DetailCardMotor = () => {
       const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
       const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
 
-      const biaya =
-        duration > 24
-          ? tarifData.tarif[0].harga_denda
-          : tarifData.tarif[0].tarif_harga;
+      let biaya;
+      if (riwayatData.riwayat_scans[0].status_parkir === "Parkir Inap") {
+        const parkirInapRecord = parkirInapData.parkir_inaps.find(
+          (record) =>
+            record.card_motor_id === parseInt(cardId) &&
+            record.status_pengajuan === "Diterima"
+        );
+        if (
+          parkirInapRecord &&
+          scanMasuk >= new Date(parkirInapRecord.tanggal_masuk) &&
+          scanMasuk <= new Date(parkirInapRecord.tanggal_keluar)
+        ) {
+          biaya = tarifData.tarif[0].biaya_inap;
+        } else {
+          biaya = tarifData.tarif[0].harga_denda;
+        }
+      } else {
+        biaya =
+          duration > 24
+            ? tarifData.tarif[0].harga_denda
+            : tarifData.tarif[0].tarif_harga;
+      }
+
       const statusPembayaran = "Sudah bayar";
 
       try {
@@ -260,7 +344,7 @@ const DetailCardMotor = () => {
                 <img src={card.foto_KTM} alt="KTM" />
                 <img src={card.foto_motor} alt="Motor" />
               </div>
-              {roleId === 2 ? (
+              {roleId === 1 && (
                 <div
                   className="flex justify-center mt-4 text-sm space-x-4"
                   style={{ width: "90%" }}
@@ -273,13 +357,27 @@ const DetailCardMotor = () => {
                     Kembali
                   </button>
                   <button
+                      className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
+                      onClick={handleGenerateQRCode}
+                    >
+                      Generate QR Code
+                    </button>
+                </div>
+              )}
+              {roleId === 2 && (
+                <div
+                  className="flex justify-center mt-4 text-sm space-x-4"
+                  style={{ width: "90%" }}
+                >
+                  <button
                     className=" bg-red-maron hover:bg-red-700 text-white py-2 px-3 my-2 rounded flex justify-start"
                     onClick={handleCheckBiaya}
                   >
                     Cek biaya
                   </button>
                 </div>
-              ) : (
+              )}
+              {roleId === 3 && (
                 <div className="actions">
                   <div
                     className="flex justify-center mt-4 text-sm space-x-4"
@@ -343,7 +441,7 @@ const DetailCardMotor = () => {
             onClick={handlePayment}
             className="flex justify-center text-white mx-auto mt-6 bg-red-maron hover:bg-red-700 py-2 px-3 my-2 rounded"
           >
-            Sudah bayar
+            Ubah Status Pembayaran
           </button>
         </div>
       </Dialog>

@@ -1,16 +1,17 @@
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useApolloClient, useMutation, useQuery } from "@apollo/client";
 import { Button } from "primereact/button";
 import React, { useRef, useState } from "react";
 import { QrReader } from "react-qr-reader";
-import { useNavigate } from "react-router-dom";
 import { Notification, Profilebar, Sidebarpetugas } from "../../components";
 
+// GraphQL Queries and Mutations
 const INSERT_RIWAYAT_PARKIR = gql`
   mutation InsertRiwayatParkir(
     $scanMasuk: timestamptz!
     $cardMotorId: Int!
     $statusPembayaran: String!
     $biaya: Int!
+    $statusParkir: String!
   ) {
     insert_riwayat_scans_one(
       object: {
@@ -19,6 +20,7 @@ const INSERT_RIWAYAT_PARKIR = gql`
         status_pembayaran: $statusPembayaran
         biaya: $biaya
         card_motor_id: $cardMotorId
+        status_parkir: $statusParkir
       }
     ) {
       id
@@ -31,6 +33,22 @@ const GET_TARIF_HARGA = gql`
     tarif {
       tarif_harga
       harga_denda
+      biaya_inap
+    }
+  }
+`;
+
+const CHECK_PARKIR_INAP = gql`
+  query CheckParkirInap($cardMotorId: Int!, $currentDate: timestamptz!) {
+    parkir_inaps(
+      where: {
+        card_motor_id: { _eq: $cardMotorId }
+        status_pengajuan: { _eq: "Diterima" }
+        tanggal_masuk: { _lte: $currentDate }
+        tanggal_keluar: { _gte: $currentDate }
+      }
+    ) {
+      id
     }
   }
 `;
@@ -38,53 +56,57 @@ const GET_TARIF_HARGA = gql`
 const ScanMasuk = () => {
   const [insertRiwayatParkir] = useMutation(INSERT_RIWAYAT_PARKIR);
   const { data: tarifData } = useQuery(GET_TARIF_HARGA);
+  const client = useApolloClient();
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const hasScannedRef = useRef(false);
-  const navigate = useNavigate();
 
   const handleResult = async (result, error) => {
     if (result && !hasScannedRef.current) {
-      hasScannedRef.current = true; 
-      setIsScanning(false); 
+      hasScannedRef.current = true;
+      setIsScanning(false);
 
       try {
         const url = new URL(result.text);
         const parts = url.pathname.split("/");
         const userId = parts[2];
-        const cardMotorId = parts[4];
+        const cardMotorId = parseInt(parts[4]);
 
         const scanMasuk = new Date().toISOString();
         const statusPembayaran = "Belum bayar";
-        const biaya = tarifData?.tarif[0]?.tarif_harga || 0;
+        const currentDate = new Date().toISOString();
+
+        const { data: parkirInapData } = await client.query({
+          query: CHECK_PARKIR_INAP,
+          variables: {
+            cardMotorId,
+            currentDate,
+          },
+        });
+
+        const statusParkir =
+          parkirInapData?.parkir_inaps.length > 0 ? "Parkir Inap" : "Reguler";
+        const biaya =
+          statusParkir === "Parkir Inap"
+            ? tarifData?.tarif[0]?.biaya_inap || 0
+            : tarifData?.tarif[0]?.tarif_harga || 0;
 
         await insertRiwayatParkir({
           variables: {
             scanMasuk,
-            cardMotorId: parseInt(cardMotorId),
+            cardMotorId,
             statusPembayaran,
             biaya,
+            statusParkir,
           },
         });
 
-        navigate(
-          `/list-card-motor/${userId}/detail-card-motor/${cardMotorId}`,
-          {
-            state: {
-              scanMasuk,
-              cardMotorId: parseInt(cardMotorId),
-              statusPembayaran,
-              biaya,
-            },
-          }
-        );
-
-        setNotificationMessage("Scan masuk berhasil disimpan.");
+        setNotificationMessage("Berhasil melakukan scan masuk");
         setNotification(true);
       } catch (error) {
         console.error("Error processing scan data:", error);
-        setNotificationMessage("Gagal memproses scan masuk.");
+        setNotificationMessage("Gagal memproses scan masuk");
         setNotification(true);
       }
     } else if (error) {
@@ -117,7 +139,7 @@ const ScanMasuk = () => {
                   className="p-button-rounded p-button-success bg-red-maron hover:bg-red-700 text-white-light px-3 py-2 rounded-lg"
                   onClick={() => {
                     setIsScanning(true);
-                    hasScannedRef.current = false; 
+                    hasScannedRef.current = false;
                   }}
                 />
               </div>

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import {
   BsArrowLeftCircle,
   BsArrowRight,
+  BsCalendarRange,
   BsCashCoin,
   BsClockHistory,
   BsHouseDoor,
@@ -262,6 +263,54 @@ const Sidebar = () => {
                           >
                             <BsArrowRight className="my-auto" />
                             <span className="ms-3">Keluar Parkir</span>
+                          </NavLink>
+                        )}
+                      </MenuItem>
+                    </div>
+                  </MenuItems>
+                </Menu>
+                <Menu
+                  as="div"
+                  className="relative inline-block text-left w-full mt-4"
+                >
+                  <div>
+                    <MenuButton className="inline-flex w-full justify-start gap-x-1.5 rounded-md bg-white-light px-4 py-2 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-white-maron transition-all duration-500 ease-in-out">
+                      <BsCalendarRange className="my-auto ms-1 text-2xl" />
+                      <span
+                        className={`${
+                          !open && "hidden"
+                        } ms-4 transition-opacity duration-500 ease-in-out`}
+                      >
+                        Parkir Inap
+                      </span>
+                      <ChevronDownIcon
+                        className={`-mr-1 h-5 w-5 text-black ms-auto me-6 ${
+                          !open && "hidden"
+                        }`}
+                        aria-hidden="true"
+                      />
+                    </MenuButton>
+                  </div>
+                  <MenuItems
+                    className={`absolute right-0 z-10 mt-2 w-72 origin-top-right divide-y divide-gray-100 rounded-md bg-white-light shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-500 ease-in-out ${
+                      !open && "hidden"
+                    }`}
+                  >
+                    <div className="py-1">
+                      <MenuItem>
+                        {({ active }) => (
+                          <NavLink
+                            to={`/list-pengajuan-parkir-inap`}
+                            className={({ isActive }) =>
+                              `flex px-4 py-2 text-base ${
+                                isActive
+                                  ? "text-red-maron bg-white-maron"
+                                  : "text-gray-700"
+                              }`
+                            }
+                          >
+                            <BsArrowRight className="my-auto" />
+                            <span className="ms-3">Pengajuan Parkir Inap</span>
                           </NavLink>
                         )}
                       </MenuItem>

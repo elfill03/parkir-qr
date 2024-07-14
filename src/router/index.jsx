@@ -5,8 +5,10 @@ import {
   Datamahasiswa,
   Datapetugas,
   Detailcardmotor,
+  ListParkirInap,
   Listcardmotor,
   Login,
+  ParkirInap,
   Riwayatkeluar,
   Riwayatmasuk,
   Scankeluar,
@@ -90,6 +92,22 @@ const router = [
     element: (
       <ProtectedRoute roleRequired={3}>
         <Tarifparkirmahasiswa />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/pengajuan-parkir-inap/:userId",
+    element: (
+      <ProtectedRoute roleRequired={3}>
+        <ParkirInap />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/list-pengajuan-parkir-inap",
+    element: (
+      <ProtectedRoute roleRequired={1}>
+        <ListParkirInap />
       </ProtectedRoute>
     ),
   },

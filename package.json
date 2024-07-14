@@ -27,6 +27,7 @@
     "crypto-js": "^4.2.0",
     "firebase": "^10.12.2",
     "graphql": "^16.9.0",
+    "jspdf": "^2.5.1",
     "primeicons": "^7.0.0",
     "primereact": "^10.6.6",
     "qrcode.react": "^3.1.0",

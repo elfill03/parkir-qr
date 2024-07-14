@@ -8,6 +8,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import "primereact/resources/primereact.min.css";
 import "primereact/resources/themes/saga-blue/theme.css";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Get data Graphql Query
 const GET_RIWAYAT_PARKIR_KELUAR = gql`
@@ -16,11 +17,14 @@ const GET_RIWAYAT_PARKIR_KELUAR = gql`
       scan_keluar
       biaya
       status_pembayaran
+      status_parkir
       card_motor {
+        id
         foto_QR_Code
         mahasiswa {
           NIM
           user {
+            id
             nama
             email
           }
@@ -32,6 +36,7 @@ const GET_RIWAYAT_PARKIR_KELUAR = gql`
 
 const Riwayatparkirkeluar = () => {
   const { loading, error, data } = useQuery(GET_RIWAYAT_PARKIR_KELUAR);
+  const navigate = useNavigate();
   const [sortField, setSortField] = useState("scan_keluar_sort");
   const [sortOrder, setSortOrder] = useState(-1); // -1 for descending, 1 for ascending
   const [filters, setFilters] = useState(null);
@@ -69,6 +74,10 @@ const Riwayatparkirkeluar = () => {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
       },
+      status_parkir: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
       scan_keluar: {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
@@ -90,11 +99,16 @@ const Riwayatparkirkeluar = () => {
     if (!isoDate) return "Belum keluar";
     const date = new Date(isoDate);
     // Adjust timezone
-    date.setHours(date.getHours() );
+    date.setHours(date.getHours());
     const formattedDate = `${date.getDate()}-${
       date.getMonth() + 1
     }-${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
     return formattedDate;
+  };
+
+  // Navigate to detail
+  const navigateToDetail = (userId, cardMotorId) => {
+    navigate(`/list-card-motor/${userId}/detail-card-motor/${cardMotorId}`);
   };
 
   // Image column
@@ -108,7 +122,14 @@ const Riwayatparkirkeluar = () => {
           minWidth: "60px",
           width: "100%",
           height: "auto",
+          cursor: "pointer",
         }}
+        onClick={() =>
+          navigateToDetail(
+            rowData.card_motor.mahasiswa.user.id,
+            rowData.card_motor.id
+          )
+        }
       />
     </div>
   );
@@ -175,6 +196,7 @@ const Riwayatparkirkeluar = () => {
                 "card_motor.mahasiswa.NIM",
                 "card_motor.mahasiswa.user.email",
                 "status_pembayaran",
+                "status_parkir",
               ]}
               header={header}
               emptyMessage="No parking records found."
@@ -199,7 +221,7 @@ const Riwayatparkirkeluar = () => {
                 header="Email"
                 filter
                 filterPlaceholder="Search by email"
-                style={{ width: "20%" }}
+                style={{ width: "15%" }}
               />
               <Column field="biaya" header="Biaya" style={{ width: "10%" }} />
               <Column
@@ -214,7 +236,7 @@ const Riwayatparkirkeluar = () => {
                 field="card_motor.foto_QR_Code"
                 header="Foto QR Code"
                 body={imageBodyTemplate}
-                style={{ width: "10%" }}
+                style={{ width: "15%" }}
               />
               <Column
                 field="scan_keluar"
@@ -227,6 +249,14 @@ const Riwayatparkirkeluar = () => {
                   <InputText type="date" onChange={onGlobalFilterChange} />
                 }
                 style={{ width: "15%", color: "black" }}
+              />
+              <Column
+                field="status_parkir"
+                header="Status Parkir"
+                sortable
+                filter
+                filterPlaceholder="Search by status"
+                style={{ width: "10%" }}
               />
             </DataTable>
           )}
