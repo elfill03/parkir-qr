@@ -144,7 +144,6 @@ const ListCardMotor = () => {
         refetch();
       }
     } catch (error) {
-      console.error("Error creating card:", error);
       console.error(
         "GraphQL error details:",
         error.networkError?.result?.errors || error.message
@@ -181,7 +180,6 @@ const ListCardMotor = () => {
         refetch();
       }
     } catch (error) {
-      console.error("Error editing card:", error);
       console.error(
         "GraphQL error details:",
         error.networkError?.result?.errors || error.message
@@ -206,7 +204,6 @@ const ListCardMotor = () => {
         refetch();
       }
     } catch (error) {
-      console.error("Error deleting card:", error);
       console.error(
         "GraphQL error details:",
         error.networkError?.result?.errors || error.message
@@ -305,9 +302,7 @@ const ListCardMotor = () => {
         doc.save(fileName);
       };
       reader.readAsDataURL(blob);
-    } catch (error) {
-      console.error("Error printing QR code:", error);
-    }
+    } catch (error) {}
   };
 
   // Responsive dialog
@@ -327,7 +322,7 @@ const ListCardMotor = () => {
   }, []);
 
   return (
-    <div >
+    <div>
       {roleId === 1 && (
         <div className="flex flex-col bg-white-maron flex-grow min-h-screen">
           <Profilebar />
@@ -406,7 +401,7 @@ const ListCardMotor = () => {
         </div>
       )}
       {roleId === 3 && (
-        <div >
+        <div>
           <Sidebarmahasiswa />
           <div className="flex flex-col bg-white-maron flex-grow min-w-screen min-h-screen">
             <Profilebar />

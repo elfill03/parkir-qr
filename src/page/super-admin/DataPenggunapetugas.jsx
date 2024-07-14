@@ -281,7 +281,22 @@ const DataPenggunapetugas = () => {
       </span>
     </div>
   );
-  
+
+  React.useEffect(() => {
+    const updateDialogWidth = () => {
+      if (window.innerWidth <= 680) {
+        setDialogWidth("80%");
+      } else {
+        setDialogWidth("30%");
+      }
+    };
+
+    window.addEventListener("resize", updateDialogWidth);
+    updateDialogWidth();
+
+    return () => window.removeEventListener("resize", updateDialogWidth);
+  }, []);
+
   return (
     <>
       <div className="flex">

@@ -241,9 +241,7 @@ const Datapenggunamahasiswa = () => {
         setDisplayDialog(false);
         setNewStudent({ nama: "", email: "", password: "", NIM: "" });
         setIsEditMode(false);
-      } catch (error) {
-        console.error("Error:", error);
-      }
+      } catch (error) {}
     }
   };
 
