@@ -458,7 +458,7 @@ const DataPenggunapetugas = () => {
         onHide={() => setDeleteConfirmDialog(false)}
         draggable={false}
         className="centered-dialog"
-        style={{ width: "30%" }}
+        style={{ width: dialogWidth }}
       >
         <div className="flex justify-center mt-5">
           <p>Apakah Anda yakin ingin menghapus akun petugas berikut?</p>
