@@ -63,6 +63,10 @@ const Tarifharga = () => {
     }
   }, [data]);
 
+  const handleValueChange = (value, setter) => {
+    setter(value || 0);
+  };
+
   const handleSubmit = async () => {
     try {
       const { data } = await updateTariff({
@@ -74,7 +78,7 @@ const Tarifharga = () => {
       });
       if (data.update_tarif.affected_rows > 0) {
         setNotificationMessage(
-          "Berhasil mengubah harga tarif, denda, dan biaya inap"
+          "Berhasil mengubah harga tarif, biaya inap, dan denda"
         );
         setNotification(true);
         refetch();
@@ -138,7 +142,7 @@ const Tarifharga = () => {
               <div className="p-5 bg-white-light rounded-xl">
                 <img className="h-auto w-30 mb-5" src={img5} alt="motorcycle" />
                 <h1 className="text-lg font-semibold">
-                  Tarif Parkir, Denda & Biaya Inap
+                  Tarif Parkir, Biaya Inap, & Denda
                 </h1>
                 <hr className="mb-5 bg-red-maron pt-1" />
                 {loading ? (
@@ -154,15 +158,15 @@ const Tarifharga = () => {
                       </h1>
                     </div>
                     <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
-                      <h1 className="w-24">Denda</h1>
-                      <h1 className="w-24">
-                        : Rp. {newHargaDenda.toLocaleString("id-ID")}
-                      </h1>
-                    </div>
-                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
                       <h1 className="w-24">Biaya Inap</h1>
                       <h1 className="w-24">
                         : Rp. {newBiayaInap.toLocaleString("id-ID")}
+                      </h1>
+                    </div>
+                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
+                      <h1 className="w-24">Denda</h1>
+                      <h1 className="w-24">
+                        : Rp. {newHargaDenda.toLocaleString("id-ID")}
                       </h1>
                     </div>
                     <Button
@@ -193,19 +197,9 @@ const Tarifharga = () => {
             <InputNumber
               id="tarifHarga"
               value={newTarifHarga}
-              onValueChange={(e) => setNewTarifHarga(e.value)}
-              mode="currency"
-              currency="IDR"
-              locale="id-ID"
-              className="input-border"
-            />
-          </div>
-          <div className="p-field">
-            <label htmlFor="hargaDenda">Harga Denda</label>
-            <InputNumber
-              id="hargaDenda"
-              value={newHargaDenda}
-              onValueChange={(e) => setNewHargaDenda(e.value)}
+              onValueChange={(e) =>
+                handleValueChange(e.value, setNewTarifHarga)
+              }
               mode="currency"
               currency="IDR"
               locale="id-ID"
@@ -217,7 +211,21 @@ const Tarifharga = () => {
             <InputNumber
               id="biayaInap"
               value={newBiayaInap}
-              onValueChange={(e) => setNewBiayaInap(e.value)}
+              onValueChange={(e) => handleValueChange(e.value, setNewBiayaInap)}
+              mode="currency"
+              currency="IDR"
+              locale="id-ID"
+              className="input-border"
+            />
+          </div>
+          <div className="p-field">
+            <label htmlFor="hargaDenda">Harga Denda</label>
+            <InputNumber
+              id="hargaDenda"
+              value={newHargaDenda}
+              onValueChange={(e) =>
+                handleValueChange(e.value, setNewHargaDenda)
+              }
               mode="currency"
               currency="IDR"
               locale="id-ID"
