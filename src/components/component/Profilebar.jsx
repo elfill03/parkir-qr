@@ -88,12 +88,7 @@ const Profilebar = () => {
 
   useEffect(() => {
     if (data && data.users_by_pk) {
-      setPasswordData((prev) => ({
-        ...prev,
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      }));
+      resetPasswordForm();
     }
   }, [data]);
 
@@ -118,6 +113,7 @@ const Profilebar = () => {
       setNotificationMessage("Berhasil mengubah password");
       setNotification(true);
       setErrors({});
+      resetPasswordForm();
     },
     onError: (error) => {
       console.error(error);
@@ -155,6 +151,7 @@ const Profilebar = () => {
   const handleClosePasswordDialog = () => {
     setPasswordDialogVisible(false);
     setErrors({});
+    resetPasswordForm();
   };
 
   const closeNotification = () => {
@@ -256,6 +253,14 @@ const Profilebar = () => {
       setErrors({ currentPassword: "Data pengguna tidak ditemukan" });
       setLoadingUpdate(false);
     }
+  };
+
+  const resetPasswordForm = () => {
+    setPasswordData({
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    });
   };
 
   if (error) return <p>Error: {error.message}</p>;

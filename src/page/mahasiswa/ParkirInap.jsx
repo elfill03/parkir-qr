@@ -563,6 +563,7 @@ const ParkirInap = () => {
                           ? "border-red-maron bg-gray-200"
                           : "border-gray-300"
                       }`}
+                      style={{ width: "30%", height: "auto" }}
                       onClick={() =>
                         handleInputChange({
                           target: { name: "card_motor_id", value: card.id },
@@ -582,7 +583,6 @@ const ParkirInap = () => {
                         <img
                           src={card.foto_motor}
                           alt={`Card Motor ${card.id}`}
-                          className="min-w-16 max-w-32 h-auto"
                         />
                       </label>
                     </div>

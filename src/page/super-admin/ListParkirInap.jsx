@@ -52,7 +52,6 @@ const UPDATE_PARKIR_INAP_STATUS = gql`
 const formatDate = (isoDate) => {
   if (!isoDate) return "Belum ada tanggal";
   const date = new Date(isoDate);
-  // Adjust timezone
   date.setHours(date.getHours() - 7);
   const formattedDate = `${date.getDate()}-${
     date.getMonth() + 1
@@ -159,6 +158,26 @@ const ListParkirInap = () => {
     </div>
   );
 
+  const statusPengajuanBodyTemplate = (rowData) => {
+    let statusClass;
+    switch (rowData.status_pengajuan) {
+      case "Diterima":
+        statusClass =
+          "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full";
+        break;
+      case "Ditolak":
+        statusClass =
+          "bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-full";
+        break;
+      case "Pending":
+      default:
+        statusClass =
+          "bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-full";
+        break;
+    }
+    return <span className={statusClass}>{rowData.status_pengajuan}</span>;
+  };
+
   const header = (
     <div className="flex justify-content-between">
       <Button
@@ -196,6 +215,13 @@ const ListParkirInap = () => {
     return () => window.removeEventListener("resize", updateDialogWidth);
   }, []);
 
+  // Sort the data to have "Pending" status first
+  const sortedData = data?.parkir_inaps ? [...data.parkir_inaps].sort((a, b) => {
+    if (a.status_pengajuan === "Pending" && b.status_pengajuan !== "Pending") return -1;
+    if (a.status_pengajuan !== "Pending" && b.status_pengajuan === "Pending") return 1;
+    return 0;
+  }) : [];
+
   return (
     <>
       <div className="flex">
@@ -217,7 +243,7 @@ const ListParkirInap = () => {
                 </div>
               ) : (
                 <DataTable
-                  value={data?.parkir_inaps}
+                  value={sortedData}
                   paginator
                   rows={5}
                   rowsPerPageOptions={[5, 10, 25, 50]}
@@ -286,6 +312,7 @@ const ListParkirInap = () => {
                   <Column
                     field="status_pengajuan"
                     header="Status Pengajuan"
+                    body={statusPengajuanBodyTemplate}
                     filter
                     filterPlaceholder="Search by status"
                     style={{ width: "10%" }}

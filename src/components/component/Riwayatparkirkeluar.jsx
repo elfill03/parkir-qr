@@ -140,6 +140,15 @@ const Riwayatparkirkeluar = () => {
     </div>
   );
 
+  const statusParkirBodyTemplate = (rowData) => {
+    const statusParkirClass =
+      rowData.status_parkir === "Parkir Inap"
+        ? "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full"
+        : "bg-blue-200 text-blue-800 font-semibold py-2 px-4 rounded-full";
+
+    return <span className={statusParkirClass}>{rowData.status_parkir}</span>;
+  };
+
   // Handle sorting
   const onSortChange = (event) => {
     setSortField(event.sortField);
@@ -213,7 +222,7 @@ const Riwayatparkirkeluar = () => {
                 header="Nama Mahasiswa"
                 filter
                 filterPlaceholder="Search by name"
-                style={{ width: "20%" }}
+                style={{ width: "15%" }}
               />
               <Column
                 field="card_motor.mahasiswa.NIM"
@@ -240,7 +249,7 @@ const Riwayatparkirkeluar = () => {
                 header="Status Pembayaran"
                 filter
                 filterPlaceholder="Search by status"
-                style={{ width: "15%", color: "black" }}
+                style={{ width: "10%", color: "black" }}
                 sortable
               />
               <Column
@@ -264,6 +273,7 @@ const Riwayatparkirkeluar = () => {
               <Column
                 field="status_parkir"
                 header="Status Parkir"
+                body={statusParkirBodyTemplate}
                 sortable
                 filter
                 filterPlaceholder="Search by status"

@@ -122,6 +122,15 @@ const Riwayatparkirmasuk = () => {
     </div>
   );
 
+  const statusParkirBodyTemplate = (rowData) => {
+    const statusParkirClass =
+      rowData.status_parkir === "Parkir Inap"
+        ? "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full"
+        : "bg-blue-200 text-blue-800 font-semibold py-2 px-4 rounded-full";
+
+    return <span className={statusParkirClass}>{rowData.status_parkir}</span>;
+  };
+
   const onSortChange = (event) => {
     setSortField(event.sortField);
     setSortOrder(event.sortOrder);
@@ -229,6 +238,7 @@ const Riwayatparkirmasuk = () => {
                 <Column
                   field="status_parkir"
                   header="Status Parkir"
+                  body={statusParkirBodyTemplate}
                   sortable
                   filter
                   filterPlaceholder="Search by status"

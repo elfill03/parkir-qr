@@ -1,4 +1,4 @@
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation, useQuery, useApolloClient } from "@apollo/client";
 import {
   deleteObject,
   getDownloadURL,
@@ -9,7 +9,7 @@ import jsPDF from "jspdf";
 import { Button } from "primereact/button";
 import { Dialog } from "primereact/dialog";
 import { ProgressSpinner } from "primereact/progressspinner";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { BsChevronLeft, BsPencilSquare, BsTrash } from "react-icons/bs";
 import { useNavigate, useParams } from "react-router-dom";
 import { Notification, Profilebar, Sidebarmahasiswa } from "../../components";
@@ -79,9 +79,18 @@ const DELETE_CARD = gql`
   }
 `;
 
+const CHECK_PARKIR_INAP = gql`
+  query CheckParkirInap($cardMotorId: Int!) {
+    parkir_inaps(where: { card_motor_id: { _eq: $cardMotorId } }) {
+      id
+    }
+  }
+`;
+
 const ListCardMotor = () => {
   const { userId } = useParams();
   const navigate = useNavigate();
+  const client = useApolloClient();
 
   const user = JSON.parse(localStorage.getItem("user"));
   const roleId = user?.role_id;
@@ -104,10 +113,14 @@ const ListCardMotor = () => {
   const [fotoKTM, setFotoKTM] = useState(null);
   const [fotoMotor, setFotoMotor] = useState(null);
   const [selectedCard, setSelectedCard] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const cardMotors = data?.users_by_pk?.mahasiswas[0]?.card_motors || [];
   const mahasiswaId = data?.users_by_pk?.mahasiswas[0]?.id || null;
   const NIM = data?.users_by_pk?.mahasiswas[0]?.NIM || null;
+
+  // Sort cardMotors by id ascending
+  const sortedCardMotors = [...cardMotors].sort((a, b) => a.id - b.id);
 
   const handleSubmit = async () => {
     if (cardMotors.length >= 3) {
@@ -127,6 +140,8 @@ const ListCardMotor = () => {
       setNotification(true);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       const urls = await uploadFiles();
@@ -149,7 +164,9 @@ const ListCardMotor = () => {
         error.networkError?.result?.errors || error.message
       );
     } finally {
+      setIsSubmitting(false);
       setDisplayDialog(false);
+      resetForm();
     }
   };
 
@@ -161,6 +178,8 @@ const ListCardMotor = () => {
       setNotification(true);
       return;
     }
+
+    setIsSubmitting(true);
 
     try {
       await deleteFilesFromStorage(selectedCard);
@@ -185,20 +204,36 @@ const ListCardMotor = () => {
         error.networkError?.result?.errors || error.message
       );
     } finally {
+      setIsSubmitting(false);
       setEditDialog(false);
+      resetForm();
     }
   };
 
   const handleDelete = async () => {
     try {
+      const { data: parkirInapData } = await client.query({
+        query: CHECK_PARKIR_INAP,
+        variables: { cardMotorId: deleteCardId },
+      });
+
+      if (parkirInapData.parkir_inaps.length > 0) {
+        setNotificationMessage(
+          "Card motor terdaftar sebagai pengajuan parkir inap, tidak dapat menghapus card motor ini"
+        );
+        setNotification(true);
+        setDeleteConfirmDialog(false);
+        return;
+      }
+
       const card = cardMotors.find((card) => card.id === deleteCardId);
       await deleteFilesFromStorage(card);
 
-      const { data } = await deleteCard({
+      const { data: deleteData } = await deleteCard({
         variables: { cardId: card.id },
       });
 
-      if (data.delete_card_motors_by_pk.id) {
+      if (deleteData.delete_card_motors_by_pk.id) {
         setNotificationMessage("Berhasil menghapus card motor");
         setNotification(true);
         refetch();
@@ -303,7 +338,16 @@ const ListCardMotor = () => {
     } catch (error) {}
   };
 
-  React.useEffect(() => {
+  const resetForm = () => {
+    setFotoSTNK(null);
+    setFotoKTM(null);
+    setFotoMotor(null);
+    document.getElementById('fotoSTNK').value = null;
+    document.getElementById('fotoKTM').value = null;
+    document.getElementById('fotoMotor').value = null;
+  };
+
+  useEffect(() => {
     const updateDialogWidth = () => {
       if (window.innerWidth <= 680) {
         setDialogWidth("80%");
@@ -348,7 +392,7 @@ const ListCardMotor = () => {
               </div>
             ) : error ? (
               <p>Error: {error.message}</p>
-            ) : cardMotors.length === 0 ? (
+            ) : sortedCardMotors.length === 0 ? (
               <div className="flex justify-center items-center h-32">
                 <p className="text-xl font-semibold">
                   Mahasiswa ini tidak memiliki card motor
@@ -356,7 +400,7 @@ const ListCardMotor = () => {
               </div>
             ) : (
               <div className="flex flex-wrap justify-center xl:justify-start">
-                {cardMotors.map((card, index) => (
+                {sortedCardMotors.map((card, index) => (
                   <div key={card.id} className="mb-5 mx-10 p-2">
                     <div className="p-5 bg-white-light shadow-2xl rounded-xl">
                       <img
@@ -426,7 +470,7 @@ const ListCardMotor = () => {
                 </div>
               ) : error ? (
                 <p>Error: {error.message}</p>
-              ) : cardMotors.length === 0 ? (
+              ) : sortedCardMotors.length === 0 ? (
                 <div className="flex justify-center items-center h-32">
                   <p className="text-xl font-semibold">
                     Anda tidak memiliki card motor, silahkan buat terlebih
@@ -435,7 +479,7 @@ const ListCardMotor = () => {
                 </div>
               ) : (
                 <div className="flex flex-wrap justify-center xl:justify-start">
-                  {cardMotors.map((card, index) => (
+                  {sortedCardMotors.map((card, index) => (
                     <div key={card.id} className="mb-5 mx-10 p-2">
                       <div className="p-5 bg-white-light shadow-2xl rounded-xl">
                         <img
@@ -498,56 +542,68 @@ const ListCardMotor = () => {
         header="Buat Card Motor"
         visible={displayDialog}
         style={{ width: dialogWidth }}
-        onHide={() => setDisplayDialog(false)}
+        onHide={() => {
+          setDisplayDialog(false);
+          resetForm();
+        }}
         draggable={false}
         className="centered-dialog"
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="fotoSTNK">Foto STNK</label> <br />
-            <input
-              type="file"
-              id="fotoSTNK"
-              onChange={(e) => setFotoSTNK(e.target.files[0])}
-              className="input-border w-full"
-            />
+        {isSubmitting ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
           </div>
-          <div className="p-field">
-            <label htmlFor="fotoKTM">Foto KTM</label> <br />
-            <input
-              type="file"
-              id="fotoKTM"
-              onChange={(e) => setFotoKTM(e.target.files[0])}
-              className="input-border w-full"
-            />
+        ) : (
+          <div className="">
+            <div className="p-field">
+              <label htmlFor="fotoSTNK">Foto STNK</label> <br />
+              <input
+                type="file"
+                id="fotoSTNK"
+                onChange={(e) => setFotoSTNK(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="p-field">
+              <label htmlFor="fotoKTM">Foto KTM</label> <br />
+              <input
+                type="file"
+                id="fotoKTM"
+                onChange={(e) => setFotoKTM(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="p-field">
+              <label htmlFor="fotoMotor">Foto Motor</label> <br />
+              <input
+                type="file"
+                id="fotoMotor"
+                onChange={(e) => setFotoMotor(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={() => {
+                  setDisplayDialog(false);
+                  resetForm();
+                }}
+                className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Simpan"
+                icon="pi pi-check"
+                onClick={handleSubmit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <label htmlFor="fotoMotor">Foto Motor</label> <br />
-            <input
-              type="file"
-              id="fotoMotor"
-              onChange={(e) => setFotoMotor(e.target.files[0])}
-              className="input-border w-full"
-            />
-          </div>
-        </div>
-        <div className="flex justify-center mt-5">
-          <Button
-            label="Batal"
-            icon="pi pi-times"
-            onClick={() => setDisplayDialog(false)}
-            className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
-            severity="danger"
-          />
-          <Button
-            label="Simpan"
-            icon="pi pi-check"
-            onClick={handleSubmit}
-            autoFocus
-            className="bg-green-light py-2 px-4 ms-5 text-white-light"
-            severity="success"
-          />
-        </div>
+        )}
       </Dialog>
 
       {/* Edit Dialog pop up */}
@@ -555,56 +611,68 @@ const ListCardMotor = () => {
         header="Edit Card Motor"
         visible={editDialog}
         style={{ width: dialogWidth }}
-        onHide={() => setEditDialog(false)}
+        onHide={() => {
+          setEditDialog(false);
+          resetForm();
+        }}
         draggable={false}
         className="centered-dialog"
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="fotoSTNK">Foto STNK</label> <br />
-            <input
-              type="file"
-              id="fotoSTNK"
-              onChange={(e) => setFotoSTNK(e.target.files[0])}
-              className="input-border w-full"
-            />
+        {isSubmitting ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
           </div>
-          <div className="p-field">
-            <label htmlFor="fotoKTM">Foto KTM</label> <br />
-            <input
-              type="file"
-              id="fotoKTM"
-              onChange={(e) => setFotoKTM(e.target.files[0])}
-              className="input-border w-full"
-            />
+        ) : (
+          <div className="">
+            <div className="p-field">
+              <label htmlFor="fotoSTNK">Foto STNK</label> <br />
+              <input
+                type="file"
+                id="fotoSTNK"
+                onChange={(e) => setFotoSTNK(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="p-field">
+              <label htmlFor="fotoKTM">Foto KTM</label> <br />
+              <input
+                type="file"
+                id="fotoKTM"
+                onChange={(e) => setFotoKTM(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="p-field">
+              <label htmlFor="fotoMotor">Foto Motor</label> <br />
+              <input
+                type="file"
+                id="fotoMotor"
+                onChange={(e) => setFotoMotor(e.target.files[0])}
+                className="input-border w-full"
+              />
+            </div>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={() => {
+                  setEditDialog(false);
+                  resetForm();
+                }}
+                className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Simpan"
+                icon="pi pi-check"
+                onClick={handleEdit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <label htmlFor="fotoMotor">Foto Motor</label> <br />
-            <input
-              type="file"
-              id="fotoMotor"
-              onChange={(e) => setFotoMotor(e.target.files[0])}
-              className="input-border w-full"
-            />
-          </div>
-        </div>
-        <div className="flex justify-center mt-5">
-          <Button
-            label="Batal"
-            icon="pi pi-times"
-            onClick={() => setEditDialog(false)}
-            className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
-            severity="danger"
-          />
-          <Button
-            label="Simpan"
-            icon="pi pi-check"
-            onClick={handleEdit}
-            autoFocus
-            className="bg-green-light py-2 px-4 ms-5 text-white-light"
-            severity="success"
-          />
-        </div>
+        )}
       </Dialog>
 
       {/* Delete Confirmation Dialog */}
