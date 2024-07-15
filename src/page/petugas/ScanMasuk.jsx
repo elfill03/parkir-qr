@@ -1,8 +1,9 @@
 import { gql, useApolloClient, useMutation, useQuery } from "@apollo/client";
 import { Button } from "primereact/button";
-import React, { useRef, useState } from "react";
+import { Dialog } from "primereact/dialog";
+import React, { useRef, useState, useEffect } from "react";
 import { QrReader } from "react-qr-reader";
-import { Notification, Profilebar, Sidebarpetugas } from "../../components";
+import { Profilebar, Sidebarpetugas } from "../../components";
 
 // GraphQL Queries and Mutations
 const INSERT_RIWAYAT_PARKIR = gql`
@@ -53,12 +54,28 @@ const CHECK_PARKIR_INAP = gql`
   }
 `;
 
+const GET_MAHASISWA_INFO = gql`
+  query GetMahasiswaInfo($cardMotorId: Int!) {
+    card_motors_by_pk(id: $cardMotorId) {
+      mahasiswa {
+        NIM
+        user {
+          nama
+        }
+      }
+    }
+  }
+`;
+
 const ScanMasuk = () => {
   const [insertRiwayatParkir] = useMutation(INSERT_RIWAYAT_PARKIR);
   const { data: tarifData } = useQuery(GET_TARIF_HARGA);
   const client = useApolloClient();
-  const [notification, setNotification] = useState(false);
-  const [notificationMessage, setNotificationMessage] = useState("");
+  const [displayDialog, setDisplayDialog] = useState(false);
+  const [dialogWidth, setDialogWidth] = useState("30%");
+  const [dialogMessage, setDialogMessage] = useState("");
+  const [mahasiswaName, setMahasiswaName] = useState("");
+  const [mahasiswaNIM, setMahasiswaNIM] = useState("");
   const [isScanning, setIsScanning] = useState(false);
   const hasScannedRef = useRef(false);
 
@@ -102,19 +119,46 @@ const ScanMasuk = () => {
           },
         });
 
-        setNotificationMessage("Berhasil melakukan scan masuk");
-        setNotification(true);
+        const { data: mahasiswaData } = await client.query({
+          query: GET_MAHASISWA_INFO,
+          variables: {
+            cardMotorId,
+          },
+        });
+
+        const nama = mahasiswaData.card_motors_by_pk.mahasiswa.user.nama;
+        const NIM = mahasiswaData.card_motors_by_pk.mahasiswa.NIM;
+
+        setMahasiswaName(nama);
+        setMahasiswaNIM(NIM);
+        setDialogMessage("Berhasil melakukan scan masuk");
+        setDisplayDialog(true);
       } catch (error) {
-        setNotificationMessage("Gagal memproses scan masuk");
-        setNotification(true);
+        setDialogMessage("Gagal memproses scan masuk");
+        setDisplayDialog(true);
       }
     } else if (error) {
     }
   };
 
-  const closeNotification = () => {
-    setNotification(false);
+  const closeDialog = () => {
+    setDisplayDialog(false);
   };
+
+  useEffect(() => {
+    const updateDialogWidth = () => {
+      if (window.innerWidth <= 680) {
+        setDialogWidth("80%");
+      } else {
+        setDialogWidth("30%");
+      }
+    };
+
+    window.addEventListener("resize", updateDialogWidth);
+    updateDialogWidth();
+
+    return () => window.removeEventListener("resize", updateDialogWidth);
+  }, []);
 
   return (
     <>
@@ -159,11 +203,29 @@ const ScanMasuk = () => {
           </center>
         </div>
       </div>
-      <Notification
-        message={notificationMessage}
-        visible={notification}
-        onClose={closeNotification}
-      />
+      <Dialog
+        header="Konfirmasi Parkir Masuk"
+        visible={displayDialog}
+        style={{ width: dialogWidth }}
+        onHide={closeDialog}
+        footer={
+          <div className="flex justify-center">
+            <Button
+              label="Konfirmasi"
+              onClick={closeDialog}
+              className="bg-green-light py-2 px-4 text-white-light"
+            />
+          </div>
+        }
+      >
+        <p className="text-base lg:text-xl mb-2">{dialogMessage}</p>
+        {dialogMessage === "Berhasil melakukan scan masuk" && (
+          <>
+            <p className="text-base lg:text-lg">Nama mahasiswa: {mahasiswaName}</p>
+            <p className="text-base lg:text-lg">NIM: {mahasiswaNIM}</p>
+          </>
+        )}
+      </Dialog>
     </>
   );
 };

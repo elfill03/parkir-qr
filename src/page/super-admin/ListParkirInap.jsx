@@ -142,12 +142,13 @@ const ListParkirInap = () => {
         src={rowData.card_motor.foto_motor}
         alt="Foto Motor"
         style={{
-          maxWidth: "100px",
+          maxWidth: "120px",
           minWidth: "60px",
           width: "100%",
           height: "auto",
           cursor: "pointer",
         }}
+        className="border-red-maron bg-grey-maron hover:bg-gray-200 border-2 rounded-lg p-1"
         onClick={() =>
           navigateToDetail(
             rowData.card_motor.mahasiswa.user.id,
@@ -199,7 +200,7 @@ const ListParkirInap = () => {
     <>
       <div className="flex">
         <Sidebar />
-        <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
+        <div className="flex flex-col bg-white-maron flex-grow min-h-screen w-screen">
           <Profilebar />
           <center className="mt-auto mb-auto xl:mt-0">
             <div className="card custom-table mb-10">

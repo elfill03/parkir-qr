@@ -2,18 +2,18 @@ import { Menu, MenuButton, MenuItem, MenuItems } from "@headlessui/react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import React, { useState } from "react";
 import {
-  BsArrowLeftCircle,
   BsArrowRight,
   BsBicycle,
   BsCalendarRange,
   BsCashCoin,
   BsHouseDoor,
+  BsList,
 } from "react-icons/bs";
 import { NavLink } from "react-router-dom";
 import { img1 } from "../../assets";
 
 const SidebarMahasiswa = () => {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const user = JSON.parse(localStorage.getItem("user"));
   const userId = user ? user.id : null;
 
@@ -32,9 +32,9 @@ const SidebarMahasiswa = () => {
           } h-screen fixed duration-500 ease-in-out bg-white-light flex flex-col z-50 shadow-2xl`}
         >
           <div>
-            <BsArrowLeftCircle
-              className={`bg-white-light text-dark text-3xl rounded-full absolute cursor-pointer -right-2 top-20 ${
-                !open ? "rotate-180 -right-9 top-9" : ""
+            <BsList
+              className={`bg-grey-maron hover:bg-grey-light rounded text-dark text-3xl absolute cursor-pointer left-2 top-4 ${
+                !open ? "rotate-180 -right-9 " : ""
               } duration-500 ease-in-out`}
               onClick={() => setOpen(!open)}
             />

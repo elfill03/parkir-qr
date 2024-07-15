@@ -314,22 +314,22 @@ const ParkirInap = () => {
     <>
       <div className="flex">
         <Sidebarmahasiswa />
-        <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
+        <div className="flex flex-col bg-white-maron flex-grow min-h-screen w-screen">
           <Profilebar />
           <center className="mt-auto mb-auto xl:mt-0">
             <div className="card custom-table mb-10">
               <div className="flex" style={{ width: "90%" }}>
-                <h1 className="font-semibold text-2xl">
+                <h1 className="font-semibold text-base my-auto lg:text-2xl">
                   Pengajuan Parkir Inap
                 </h1>
                 <button
-                  className="bg-red-maron hover:bg-red-700 text-white-light ml-auto flex items-center px-3 py-2 rounded-lg"
+                  className="bg-red-maron hover:bg-red-700 text-sm text-white-light ml-auto flex items-center px-3 py-2 rounded-lg"
                   onClick={() => {
                     resetForm();
                     setDisplayDialog(true);
                   }}
                 >
-                  <div className="text-2xl mr-1">
+                  <div className="lg:text-2xl text-base mr-1">
                     <BsPlus />
                   </div>
                   Ajukan Parkir Inap

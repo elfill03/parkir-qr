@@ -365,7 +365,7 @@ const Datapenggunamahasiswa = () => {
         {/* Sidebar */}
         <Sidebar />
 
-        <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
+        <div className="flex flex-col bg-white-maron flex-grow min-h-screen w-screen">
           {/* Profilbar */}
           <Profilebar />
 

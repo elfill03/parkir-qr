@@ -18,7 +18,7 @@ const GET_RIWAYAT_PARKIR_MASUK = gql`
       status_parkir
       card_motor {
         id
-        foto_QR_Code
+        foto_motor
         mahasiswa {
           NIM
           user {
@@ -102,15 +102,16 @@ const Riwayatparkirmasuk = () => {
   const imageBodyTemplate = (rowData) => (
     <div className="flex justify-center">
       <img
-        src={rowData.card_motor.foto_QR_Code}
-        alt="Foto QR Code"
+        src={rowData.card_motor.foto_motor}
+        alt="Foto Motor"
         style={{
-          maxWidth: "100px",
+          maxWidth: "120px",
           minWidth: "60px",
           width: "100%",
           height: "auto",
           cursor: "pointer",
         }}
+        className="border-red-maron bg-grey-maron hover:bg-gray-200 border-2 rounded-lg p-1"
         onClick={() =>
           navigateToDetail(
             rowData.card_motor.mahasiswa.user.id,
@@ -152,89 +153,89 @@ const Riwayatparkirmasuk = () => {
     <>
       {/* Table Riwayat */}
       <center className="mt-auto mb-auto xl:mt-0">
-        <div className="card custom-table mb-10">
-          <div className="flex" style={{ width: "90%" }}>
+        <div className="card custom-table mb-10" style={{ width: "90%" }}>
+          <div className="flex">
             <h1 className=" font-semibold text-2xl">Riwayat Parkir Masuk</h1>
           </div>
-          <hr
-            className="mb-5 bg-grey-maron pt-1 mt-2"
-            style={{ width: "90%" }}
-          />
+          <hr className="mb-5 bg-grey-maron pt-1 mt-2" />
           {loading ? (
             <div className="flex justify-center items-center h-32">
               <ProgressSpinner />
             </div>
           ) : (
-            <DataTable
-              value={riwayatParkirMasuk}
-              sortField={sortField}
-              sortOrder={sortOrder}
-              onSort={onSortChange}
-              paginator
-              rows={5}
-              rowsPerPageOptions={[5, 10, 25, 50]}
-              tableStyle={{ minWidth: "50rem" }}
-              paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
-              currentPageReportTemplate="{first} to {last} of {totalRecords}"
-              filters={filters}
-              globalFilterFields={[
-                "card_motor.mahasiswa.user.nama",
-                "card_motor.mahasiswa.NIM",
-                "card_motor.mahasiswa.user.email",
-                "status_parkir",
-              ]}
-              header={header}
-              emptyMessage="No parking records found."
-              style={{ width: "90%" }}
-            >
-              <Column
-                field="card_motor.mahasiswa.user.nama"
-                header="Nama Mahasiswa"
-                filter
-                filterPlaceholder="Search by name"
-                style={{ width: "25%" }}
-              />
-              <Column
-                field="card_motor.mahasiswa.NIM"
-                header="NIM"
-                filter
-                filterPlaceholder="Search by NIM"
-                style={{ width: "15%" }}
-              />
-              <Column
-                field="card_motor.mahasiswa.user.email"
-                header="Email"
-                filter
-                filterPlaceholder="Search by email"
-                style={{ width: "15%" }}
-              />
-              <Column
-                field="card_motor.foto_QR_Code"
-                header="Foto QR Code"
-                body={imageBodyTemplate}
-                style={{ width: "15%" }}
-              />
-              <Column
-                field="scan_masuk"
-                header="Jam Masuk Parkir"
-                body={(rowData) => formatDate(rowData.scan_masuk)}
-                sortable
-                filter
-                filterField="scan_masuk"
-                filterElement={
-                  <InputText type="date" onChange={onGlobalFilterChange} />
-                }
-                style={{ width: "20%", color: "black" }}
-              />
-              <Column
-                field="status_parkir"
-                header="Status Parkir"
-                sortable
-                filter
-                filterPlaceholder="Search by status"
-                style={{ width: "10%" }}
-              />
-            </DataTable>
+            <div>
+              <DataTable
+                value={riwayatParkirMasuk}
+                sortField={sortField}
+                sortOrder={sortOrder}
+                onSort={onSortChange}
+                paginator
+                rows={5}
+                resizableColumns
+                scrollable
+                rowsPerPageOptions={[5, 10, 25, 50]}
+                tableStyle={{ minWidth: "50rem" }}
+                paginatorTemplate="RowsPerPageDropdown FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink"
+                currentPageReportTemplate="{first} to {last} of {totalRecords}"
+                filters={filters}
+                globalFilterFields={[
+                  "card_motor.mahasiswa.user.nama",
+                  "card_motor.mahasiswa.NIM",
+                  "card_motor.mahasiswa.user.email",
+                  "status_parkir",
+                ]}
+                header={header}
+                emptyMessage="No parking records found."
+              >
+                <Column
+                  field="card_motor.mahasiswa.user.nama"
+                  header="Nama Mahasiswa"
+                  filter
+                  filterPlaceholder="Search by name"
+                  style={{ width: "25%" }}
+                />
+                <Column
+                  field="card_motor.mahasiswa.NIM"
+                  header="NIM"
+                  filter
+                  filterPlaceholder="Search by NIM"
+                  style={{ width: "15%" }}
+                />
+                <Column
+                  field="card_motor.mahasiswa.user.email"
+                  header="Email"
+                  filter
+                  filterPlaceholder="Search by email"
+                  style={{ width: "15%" }}
+                />
+                <Column
+                  field="card_motor.foto_motor"
+                  header="Foto Motor"
+                  body={imageBodyTemplate}
+                  style={{ width: "15%" }}
+                />
+                <Column
+                  field="scan_masuk"
+                  header="Jam Masuk Parkir"
+                  body={(rowData) => formatDate(rowData.scan_masuk)}
+                  sortable
+                  filter
+                  filterField="scan_masuk"
+                  filterElement={
+                    <InputText type="date" onChange={onGlobalFilterChange} />
+                  }
+                  style={{ width: "20%", color: "black" }}
+                />
+                <Column
+                  field="status_parkir"
+                  header="Status Parkir"
+                  sortable
+                  filter
+                  filterPlaceholder="Search by status"
+                  style={{ width: "10%" }}
+                />
+              </DataTable>
+            </div>
           )}
         </div>
       </center>

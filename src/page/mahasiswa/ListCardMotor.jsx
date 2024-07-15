@@ -278,16 +278,14 @@ const ListCardMotor = () => {
         const base64data = event.target.result;
         const doc = new jsPDF();
 
-        // Add title
         doc.setFontSize(20);
         doc.text("QR Code Card Motor", 105, 20, { align: "center" });
 
-        // Add QR code image
         const imgProps = {
-          width: 50, // 10 cm in points (283 points)
+          width: 50,
           height: 50,
-          x: (doc.internal.pageSize.getWidth() - 50) / 2, // Center the image horizontally
-          y: 30, // Position below the title
+          x: (doc.internal.pageSize.getWidth() - 50) / 2,
+          y: 30,
         };
 
         doc.addImage(
@@ -305,7 +303,6 @@ const ListCardMotor = () => {
     } catch (error) {}
   };
 
-  // Responsive dialog
   React.useEffect(() => {
     const updateDialogWidth = () => {
       if (window.innerWidth <= 680) {

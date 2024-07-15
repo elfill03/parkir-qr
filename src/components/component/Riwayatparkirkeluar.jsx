@@ -20,7 +20,7 @@ const GET_RIWAYAT_PARKIR_KELUAR = gql`
       status_parkir
       card_motor {
         id
-        foto_QR_Code
+        foto_motor
         mahasiswa {
           NIM
           user {
@@ -106,6 +106,11 @@ const Riwayatparkirkeluar = () => {
     return formattedDate;
   };
 
+  // Format biaya
+  const formatBiaya = (biaya) => {
+    return `Rp. ${biaya.toLocaleString("id-ID")}`;
+  };
+
   // Navigate to detail
   const navigateToDetail = (userId, cardMotorId) => {
     navigate(`/list-card-motor/${userId}/detail-card-motor/${cardMotorId}`);
@@ -115,15 +120,16 @@ const Riwayatparkirkeluar = () => {
   const imageBodyTemplate = (rowData) => (
     <div className="flex justify-center">
       <img
-        src={rowData.card_motor.foto_QR_Code}
-        alt="Foto QR Code"
+        src={rowData.card_motor.foto_motor}
+        alt="Foto Motor"
         style={{
-          maxWidth: "100px",
+          maxWidth: "120px",
           minWidth: "60px",
           width: "100%",
           height: "auto",
           cursor: "pointer",
         }}
+        className="border-red-maron bg-grey-maron hover:bg-gray-200 border-2 rounded-lg p-1"
         onClick={() =>
           navigateToDetail(
             rowData.card_motor.mahasiswa.user.id,
@@ -223,7 +229,12 @@ const Riwayatparkirkeluar = () => {
                 filterPlaceholder="Search by email"
                 style={{ width: "15%" }}
               />
-              <Column field="biaya" header="Biaya" style={{ width: "10%" }} />
+              <Column
+                field="biaya"
+                header="Biaya"
+                body={(rowData) => formatBiaya(rowData.biaya)}
+                style={{ width: "10%" }}
+              />
               <Column
                 field="status_pembayaran"
                 header="Status Pembayaran"
@@ -233,8 +244,8 @@ const Riwayatparkirkeluar = () => {
                 sortable
               />
               <Column
-                field="card_motor.foto_QR_Code"
-                header="Foto QR Code"
+                field="card_motor.foto_motor"
+                header="Foto Motor"
                 body={imageBodyTemplate}
                 style={{ width: "15%" }}
               />

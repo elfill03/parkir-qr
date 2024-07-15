@@ -126,7 +126,7 @@ const Tarifharga = () => {
         <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
           <Profilebar />
 
-          <center>
+          <center className="mt-auto mb-auto xl:mt-0">
             <div className="mb-5">
               <div className="flex" style={{ width: "90%" }}>
                 <h1 className="font-semibold text-2xl">Tarif Harga Parkir</h1>
@@ -136,8 +136,6 @@ const Tarifharga = () => {
                 style={{ width: "90%" }}
               />
             </div>
-          </center>
-          <center className="mt-auto mb-auto xl:mt-0">
             <div className="flex" style={{ width: "90%" }}>
               <div className="p-5 bg-white-light rounded-xl">
                 <img className="h-auto w-30 mb-5" src={img5} alt="motorcycle" />
