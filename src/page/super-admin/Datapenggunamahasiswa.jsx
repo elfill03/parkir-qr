@@ -1,4 +1,4 @@
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import bcrypt from "bcryptjs";
 import "primeicons/primeicons.css";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
@@ -29,6 +29,14 @@ const GET_STUDENTS = gql`
       mahasiswas {
         NIM
       }
+    }
+  }
+`;
+
+const CHECK_CARD_MOTOR = gql`
+  query CheckCardMotor($userId: Int!) {
+    card_motors(where: { user_id: { _eq: $userId } }) {
+      id
     }
   }
 `;
@@ -102,10 +110,14 @@ const Datapenggunamahasiswa = () => {
   const [insertStudent] = useMutation(INSERT_STUDENT);
   const [deleteStudent] = useMutation(DELETE_STUDENT);
   const [updateStudent] = useMutation(UPDATE_STUDENT);
+  const [checkCardMotor] = useLazyQuery(CHECK_CARD_MOTOR, {
+    fetchPolicy: "network-only",
+  });
   const [displayDialog, setDisplayDialog] = useState(false);
   const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
   const [deleteStudentId, setDeleteStudentId] = useState(null);
   const [errors, setErrors] = useState({});
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [newStudent, setNewStudent] = useState({
@@ -186,20 +198,44 @@ const Datapenggunamahasiswa = () => {
 
   // Handle delete user
   const handleDeleteStudent = async (id) => {
-    await deleteStudent({
-      variables: { id },
-      refetchQueries: [{ query: GET_STUDENTS }],
-    });
-    setNotificationMessage("Berhasil menghapus data");
-    setNotification(true);
-    setTimeout(() => setNotification(false), 2000);
-    setDeleteConfirmDialog(false);
-    setDeleteStudentId(null);
+    try {
+      await deleteStudent({
+        variables: { id },
+        refetchQueries: [{ query: GET_STUDENTS }],
+      });
+      setNotificationMessage("Berhasil menghapus data");
+      setNotification(true);
+      setTimeout(() => setNotification(false), 2000);
+      setDeleteConfirmDialog(false);
+      setDeleteStudentId(null);
+    } catch (error) {
+      setDeleteConfirmDialog(false);
+      setNotificationMessage(
+        "Tidak bisa menghapus data, karena mahasiswa tersebut memiliki card motor"
+      );
+      setNotification(true);
+      setTimeout(() => setNotification(false), 4000);
+    }
   };
 
-  const confirmDeleteStudent = (id) => {
-    setDeleteStudentId(id);
-    setDeleteConfirmDialog(true);
+  const confirmDeleteStudent = async (id) => {
+    try {
+      const { data } = await checkCardMotor({ variables: { userId: id } });
+      if (data && data.card_motors && data.card_motors.length > 0) {
+        setNotificationMessage(
+          "Mahasiswa ini memiliki card motor, tidak dapat menghapus akun"
+        );
+        setNotification(true);
+        setTimeout(() => setNotification(false), 2000);
+      } else {
+        setDeleteStudentId(id);
+        setDeleteConfirmDialog(true);
+      }
+    } catch (error) {
+      setNotificationMessage("Terjadi kesalahan saat memeriksa card motor");
+      setNotification(true);
+      setTimeout(() => setNotification(false), 2000);
+    }
   };
 
   // Handle edit user
@@ -212,6 +248,7 @@ const Datapenggunamahasiswa = () => {
   // Handle submit
   const handleSubmit = async () => {
     if (validate()) {
+      setLoadingSubmit(true);
       try {
         // Hash password
         const hashedPassword = await bcrypt.hash(newStudent.password, 10);
@@ -241,7 +278,14 @@ const Datapenggunamahasiswa = () => {
         setDisplayDialog(false);
         setNewStudent({ nama: "", email: "", password: "", NIM: "" });
         setIsEditMode(false);
-      } catch (error) {}
+      } catch (error) {
+        console.error(error);
+        setNotificationMessage("Terjadi kesalahan saat menyimpan data");
+        setNotification(true);
+        setTimeout(() => setNotification(false), 2000);
+      } finally {
+        setLoadingSubmit(false);
+      }
     }
   };
 
@@ -448,9 +492,6 @@ const Datapenggunamahasiswa = () => {
                   ></Column>
                 </DataTable>
               )}
-              {notification && (
-                <div className="notification">{notificationMessage}</div>
-              )}
             </div>
           </center>
           {/* <Footer /> */}
@@ -466,73 +507,87 @@ const Datapenggunamahasiswa = () => {
         draggable={false}
         className="centered-dialog"
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="nama">Nama</label>
-            <InputText
-              id="nama"
-              name="nama"
-              value={newStudent.nama}
-              onChange={handleInputChange}
-              className={`input-border ${errors.nama ? "p-invalid" : ""}`}
-            />
-            {errors.nama && <small className="p-error">{errors.nama}</small>}
+        {loadingSubmit ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
           </div>
-          <div className="p-field">
-            <label htmlFor="email">Email</label>
-            <InputText
-              id="email"
-              name="email"
-              value={newStudent.email}
-              onChange={handleInputChange}
-              className={`input-border ${errors.email ? "p-invalid" : ""}`}
-            />
-            {errors.email && <small className="p-error">{errors.email}</small>}
+        ) : (
+          <div>
+            <div className="p-fluid">
+              <div className="p-field">
+                <label htmlFor="nama">Nama</label>
+                <InputText
+                  id="nama"
+                  name="nama"
+                  value={newStudent.nama}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.nama ? "p-invalid" : ""}`}
+                />
+                {errors.nama && (
+                  <small className="p-error">{errors.nama}</small>
+                )}
+              </div>
+              <div className="p-field">
+                <label htmlFor="email">Email</label>
+                <InputText
+                  id="email"
+                  name="email"
+                  value={newStudent.email}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.email ? "p-invalid" : ""}`}
+                />
+                {errors.email && (
+                  <small className="p-error">{errors.email}</small>
+                )}
+              </div>
+              <div className="p-field">
+                <label htmlFor="password">Password</label>
+                <Password
+                  id="password"
+                  name="password"
+                  value={newStudent.password}
+                  onChange={handleInputChange}
+                  toggleMask
+                  className={`input-border ${
+                    errors.password ? "p-invalid" : ""
+                  }`}
+                />
+                {errors.password && (
+                  <small className="p-error">{errors.password}</small>
+                )}
+              </div>
+              <div className="p-field">
+                <label htmlFor="NIM">NIM</label>
+                <InputText
+                  id="NIM"
+                  name="NIM"
+                  value={newStudent.NIM}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.NIM ? "p-invalid" : ""}`}
+                  type="number"
+                />
+                {errors.NIM && <small className="p-error">{errors.NIM}</small>}
+              </div>
+            </div>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={handleDialogHide}
+                className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Simpan"
+                icon="pi pi-check"
+                onClick={handleSubmit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
           </div>
-          <div className="p-field">
-            <label htmlFor="password">Password</label>
-            <Password
-              id="password"
-              name="password"
-              value={newStudent.password}
-              onChange={handleInputChange}
-              toggleMask
-              className={`input-border ${errors.password ? "p-invalid" : ""}`}
-            />
-            {errors.password && (
-              <small className="p-error">{errors.password}</small>
-            )}
-          </div>
-          <div className="p-field">
-            <label htmlFor="NIM">NIM</label>
-            <InputText
-              id="NIM"
-              name="NIM"
-              value={newStudent.NIM}
-              onChange={handleInputChange}
-              className={`input-border ${errors.NIM ? "p-invalid" : ""}`}
-              type="number"
-            />
-            {errors.NIM && <small className="p-error">{errors.NIM}</small>}
-          </div>
-        </div>
-        <div className="flex justify-center mt-5">
-          <Button
-            label="Batal"
-            icon="pi pi-times"
-            onClick={handleDialogHide}
-            className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
-            severity="danger"
-          />
-          <Button
-            label="Simpan"
-            icon="pi pi-check"
-            onClick={handleSubmit}
-            autoFocus
-            className="bg-green-light py-2 px-4 ms-5 text-white-light"
-            severity="success"
-          />
-        </div>
+        )}
       </Dialog>
 
       <Dialog

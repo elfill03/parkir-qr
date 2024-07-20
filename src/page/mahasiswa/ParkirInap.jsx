@@ -1,3 +1,4 @@
+import React, { useEffect, useState } from "react";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { Button } from "primereact/button";
@@ -7,7 +8,6 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { ProgressSpinner } from "primereact/progressspinner";
-import React, { useEffect, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { useParams } from "react-router-dom";
 import { Notification, Profilebar, Sidebarmahasiswa } from "../../components";
@@ -107,6 +107,7 @@ const ParkirInap = () => {
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [dialogWidth, setDialogWidth] = useState("30%");
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
 
   useEffect(() => {
     initFilters();
@@ -197,6 +198,7 @@ const ParkirInap = () => {
   };
 
   const handleConfirmSubmit = async () => {
+    setLoadingSubmit(true);
     const tanggalMasuk = `${newParkirInap.tanggal_masuk_date}T${newParkirInap.tanggal_masuk_time}:00`;
     const tanggalKeluar = `${newParkirInap.tanggal_keluar_date}T${newParkirInap.tanggal_keluar_time}:00`;
 
@@ -221,6 +223,7 @@ const ParkirInap = () => {
     setTimeout(() => setNotification(false), 3000);
     setDisplayDialog(false);
     setDisplayConfirmationDialog(false);
+    setLoadingSubmit(false);
   };
 
   const validateForm = () => {
@@ -295,7 +298,7 @@ const ParkirInap = () => {
     </div>
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     const updateDialogWidth = () => {
       if (window.innerWidth <= 680) {
         setDialogWidth("90%");
@@ -624,27 +627,35 @@ const ParkirInap = () => {
         className="centered-dialog"
         style={{ width: dialogWidth }}
       >
-        <p>
-          Apakah anda telah mengisi data dengan benar, karena data tidak dapat
-          diubah?
-        </p>
-        <div className="flex justify-center mt-5">
-          <Button
-            label="Batal"
-            icon="pi pi-times"
-            onClick={() => setDisplayConfirmationDialog(false)}
-            className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
-            severity="danger"
-          />
-          <Button
-            label="Ya"
-            icon="pi pi-check"
-            onClick={handleConfirmSubmit}
-            autoFocus
-            className="bg-green-light py-2 px-4 ms-5 text-white-light"
-            severity="success"
-          />
-        </div>
+        {loadingSubmit ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
+          </div>
+        ) : (
+          <>
+            <p>
+              Apakah anda telah mengisi data dengan benar, karena data tidak
+              dapat diubah?
+            </p>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={() => setDisplayConfirmationDialog(false)}
+                className="bg-red-maron hover:bg-red-700 py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Ya"
+                icon="pi pi-check"
+                onClick={handleConfirmSubmit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
+          </>
+        )}
       </Dialog>
 
       <Notification

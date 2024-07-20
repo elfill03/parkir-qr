@@ -342,10 +342,17 @@ const ListCardMotor = () => {
     setFotoSTNK(null);
     setFotoKTM(null);
     setFotoMotor(null);
-    document.getElementById('fotoSTNK').value = null;
-    document.getElementById('fotoKTM').value = null;
-    document.getElementById('fotoMotor').value = null;
-  };
+
+    const fotoSTNKElement = document.getElementById('fotoSTNK');
+    if (fotoSTNKElement) fotoSTNKElement.value = null;
+
+    const fotoKTMElement = document.getElementById('fotoKTM');
+    if (fotoKTMElement) fotoKTMElement.value = null;
+
+    const fotoMotorElement = document.getElementById('fotoMotor');
+    if (fotoMotorElement) fotoMotorElement.value = null;
+};
+
 
   useEffect(() => {
     const updateDialogWidth = () => {

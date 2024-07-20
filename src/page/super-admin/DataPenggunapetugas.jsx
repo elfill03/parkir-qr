@@ -95,6 +95,7 @@ const DataPenggunapetugas = () => {
   const [notificationMessage, setNotificationMessage] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [dialogWidth, setDialogWidth] = useState("30%");
 
   const [filters, setFilters] = useState(null);
@@ -160,6 +161,7 @@ const DataPenggunapetugas = () => {
 
   const handleSubmit = async () => {
     if (validate()) {
+      setLoadingSubmit(true);
       const hashedPassword = await bcrypt.hash(newUser.password, 10);
       if (isEditMode) {
         await updateUser({
@@ -181,6 +183,7 @@ const DataPenggunapetugas = () => {
       setDisplayDialog(false);
       setNewUser({ nama: "", email: "", password: "" });
       setIsEditMode(false);
+      setLoadingSubmit(false);
     }
   };
 
@@ -376,9 +379,6 @@ const DataPenggunapetugas = () => {
                   ></Column>
                 </DataTable>
               )}
-              {notification && (
-                <div className="notification">{notificationMessage}</div>
-              )}
             </div>
           </center>
           {/* <Footer /> */}
@@ -393,63 +393,77 @@ const DataPenggunapetugas = () => {
         className="centered-dialog"
         style={{ width: dialogWidth }}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="nama">Nama:</label>
-            <InputText
-              id="nama"
-              name="nama"
-              value={newUser.nama}
-              onChange={handleInputChange}
-              className={`input-border ${errors.nama ? "p-invalid" : ""}`}
-            />
-            {errors.nama && <small className="p-error">{errors.nama}</small>}
+        {loadingSubmit ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
           </div>
+        ) : (
+          <div>
+            <div className="p-fluid">
+              <div className="p-field">
+                <label htmlFor="nama">Nama:</label>
+                <InputText
+                  id="nama"
+                  name="nama"
+                  value={newUser.nama}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.nama ? "p-invalid" : ""}`}
+                />
+                {errors.nama && (
+                  <small className="p-error">{errors.nama}</small>
+                )}
+              </div>
 
-          <div className="p-field">
-            <label htmlFor="email">Email:</label>
-            <InputText
-              id="email"
-              name="email"
-              value={newUser.email}
-              onChange={handleInputChange}
-              className={`input-border ${errors.email ? "p-invalid" : ""}`}
-            />
-            {errors.email && <small className="p-error">{errors.email}</small>}
-          </div>
+              <div className="p-field">
+                <label htmlFor="email">Email:</label>
+                <InputText
+                  id="email"
+                  name="email"
+                  value={newUser.email}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.email ? "p-invalid" : ""}`}
+                />
+                {errors.email && (
+                  <small className="p-error">{errors.email}</small>
+                )}
+              </div>
 
-          <div className="p-field">
-            <label htmlFor="password">Password:</label>
-            <Password
-              id="password"
-              name="password"
-              value={newUser.password}
-              onChange={handleInputChange}
-              toggleMask
-              className={`input-border ${errors.password ? "p-invalid" : ""}`}
-            />
-            {errors.password && (
-              <small className="p-error">{errors.password}</small>
-            )}
+              <div className="p-field">
+                <label htmlFor="password">Password:</label>
+                <Password
+                  id="password"
+                  name="password"
+                  value={newUser.password}
+                  onChange={handleInputChange}
+                  toggleMask
+                  className={`input-border ${
+                    errors.password ? "p-invalid" : ""
+                  }`}
+                />
+                {errors.password && (
+                  <small className="p-error">{errors.password}</small>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={handleDialogHide}
+                className="bg-red-maron py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Simpan"
+                icon="pi pi-check"
+                onClick={handleSubmit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
           </div>
-        </div>
-        <div className="flex justify-center mt-5">
-          <Button
-            label="Batal"
-            icon="pi pi-times"
-            onClick={handleDialogHide}
-            className="bg-red-maron py-2 px-4 text-white-light"
-            severity="danger"
-          />
-          <Button
-            label="Simpan"
-            icon="pi pi-check"
-            onClick={handleSubmit}
-            autoFocus
-            className="bg-green-light py-2 px-4 ms-5 text-white-light"
-            severity="success"
-          />
-        </div>
+        )}
       </Dialog>
 
       <Dialog
