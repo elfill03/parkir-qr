@@ -69,7 +69,8 @@ const Dashboard = () => {
   const { data: petugasData } = useQuery(GET_PETUGAS_COUNT, { client });
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [chartData, setChartData] = useState([]);
-  const [totalVehicles, setTotalVehicles] = useState(0);
+  const [totalVehiclesIn, setTotalVehiclesIn] = useState(0);
+  const [totalVehiclesOut, setTotalVehiclesOut] = useState(0);
 
   const startDate = new Date(
     new Date().getFullYear(),
@@ -124,8 +125,10 @@ const Dashboard = () => {
       setChartData(dataArray);
 
       const totalMasuk = dataArray.reduce((sum, data) => sum + data.masuk, 0);
+      const totalKeluar = dataArray.reduce((sum, data) => sum + data.keluar, 0);
 
-      setTotalVehicles(totalMasuk);
+      setTotalVehiclesIn(totalMasuk);
+      setTotalVehiclesOut(totalKeluar);
     }
   }, [riwayatData, selectedMonth]);
 
@@ -163,7 +166,7 @@ const Dashboard = () => {
               </div>
               <div className="p-6 text-center">
                 <p className="text-base md:text-base sm:text-sm font-medium text-gray-700">
-                  Jumlah Kendaraan
+                  Jumlah Kendaraan Masuk Bulan Ini
                 </p>
                 {loadingRiwayat ? (
                   <div className="flex justify-center items-center h-24">
@@ -171,7 +174,21 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <p className="text-3xl font-bold text-gray-900">
-                    {totalVehicles}
+                    {totalVehiclesIn}
+                  </p>
+                )}
+              </div>
+              <div className="p-6 text-center">
+                <p className="text-base md:text-base sm:text-sm font-medium text-gray-700">
+                  Jumlah Kendaraan Keluar Bulan Ini
+                </p>
+                {loadingRiwayat ? (
+                  <div className="flex justify-center items-center h-24">
+                    <ProgressSpinner />
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">
+                    {totalVehiclesOut}
                   </p>
                 )}
               </div>

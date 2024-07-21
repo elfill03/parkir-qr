@@ -36,7 +36,10 @@ const GET_RIWAYAT_PARKIR = gql`
         card_motor_id: { _eq: $cardMotorId }
         scan_keluar: { _is_null: false }
       }
+      order_by: { scan_keluar: desc }
+      limit: 1
     ) {
+      id
       scan_masuk
       scan_keluar
       status_parkir
@@ -58,18 +61,15 @@ const GET_PARKIR_INAP = gql`
 
 const UPDATE_STATUS_PEMBAYARAN = gql`
   mutation UpdateStatusPembayaran(
-    $cardMotorId: Int!
+    $id: Int!
     $biaya: Int!
     $statusPembayaran: String!
   ) {
-    update_riwayat_scans(
-      where: {
-        card_motor_id: { _eq: $cardMotorId }
-        scan_keluar: { _is_null: false }
-      }
+    update_riwayat_scans_by_pk(
+      pk_columns: { id: $id }
       _set: { biaya: $biaya, status_pembayaran: $statusPembayaran }
     ) {
-      affected_rows
+      id
     }
   }
 `;
@@ -180,6 +180,40 @@ const DetailCardMotor = () => {
     }, 100);
   };
 
+  const calculateBiaya = () => {
+    if (riwayatData && tarifData && parkirInapData) {
+      const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
+      const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
+      const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
+
+      let biaya;
+      if (riwayatData.riwayat_scans[0].status_parkir === "Parkir Inap") {
+        const parkirInapRecord = parkirInapData.parkir_inaps.find(
+          (record) =>
+            record.card_motor_id === parseInt(cardId) &&
+            record.status_pengajuan === "Diterima"
+        );
+        if (
+          parkirInapRecord &&
+          scanMasuk >= new Date(parkirInapRecord.tanggal_masuk) &&
+          scanMasuk <= new Date(parkirInapRecord.tanggal_keluar)
+        ) {
+          biaya = tarifData.tarif[0].biaya_inap;
+        } else {
+          biaya = tarifData.tarif[0].harga_denda;
+        }
+      } else {
+        biaya =
+          duration > 24
+            ? tarifData.tarif[0].harga_denda
+            : tarifData.tarif[0].tarif_harga;
+      }
+
+      return biaya;
+    }
+    return 0;
+  };
+
   const handleCheckBiaya = () => {
     if (riwayatData && tarifData && parkirInapData) {
       const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
@@ -223,66 +257,42 @@ const DetailCardMotor = () => {
     }
   };
 
-  const calculateBiaya = () => {
-    if (riwayatData && tarifData) {
+  const handlePayment = async () => {
+    if (riwayatData && tarifData && parkirInapData) {
       const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
       const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
       const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
 
-      let biaya;
-      if (riwayatData.riwayat_scans[0].status_parkir === "Parkir Inap") {
-        const parkirInapRecord = parkirInapData.parkir_inaps.find(
-          (record) =>
-            record.card_motor_id === parseInt(cardId) &&
-            record.status_pengajuan === "Diterima"
-        );
+      let statusParkir = "Reguler";
+      let biaya = tarifData.tarif[0].tarif_harga; // Default to tarif_harga for Reguler
+
+      const today = new Date().toISOString().split("T")[0];
+
+      for (const parkirInap of parkirInapData.parkir_inaps) {
         if (
-          parkirInapRecord &&
-          scanMasuk >= new Date(parkirInapRecord.tanggal_masuk) &&
-          scanMasuk <= new Date(parkirInapRecord.tanggal_keluar)
+          parkirInap.status_pengajuan === "Diterima" &&
+          parkirInap.tanggal_masuk <= today &&
+          parkirInap.tanggal_keluar >= today &&
+          parkirInap.card_motor_id === parseInt(cardId)
         ) {
-          biaya = tarifData.tarif[0].biaya_inap;
-        } else {
-          biaya = tarifData.tarif[0].harga_denda;
+          statusParkir = "Parkir Inap";
+          break;
         }
-      } else {
-        biaya =
-          duration > 24
-            ? tarifData.tarif[0].harga_denda
-            : tarifData.tarif[0].tarif_harga;
       }
 
-      setBiaya(biaya);
-    }
-  };
-
-  const handlePayment = async () => {
-    if (riwayatData && tarifData) {
-      const scanMasuk = new Date(riwayatData.riwayat_scans[0].scan_masuk);
-      const scanKeluar = new Date(riwayatData.riwayat_scans[0].scan_keluar);
-      const duration = (scanKeluar - scanMasuk) / (1000 * 60 * 60); // in hours
-
-      let biaya;
-      if (riwayatData.riwayat_scans[0].status_parkir === "Parkir Inap") {
+      if (statusParkir === "Parkir Inap") {
+        biaya = tarifData.tarif[0].biaya_inap;
         const parkirInapRecord = parkirInapData.parkir_inaps.find(
           (record) =>
             record.card_motor_id === parseInt(cardId) &&
-            record.status_pengajuan === "Diterima"
+            record.status_pengajuan === "Diterima" &&
+            new Date() > new Date(record.tanggal_keluar)
         );
-        if (
-          parkirInapRecord &&
-          scanMasuk >= new Date(parkirInapRecord.tanggal_masuk) &&
-          scanMasuk <= new Date(parkirInapRecord.tanggal_keluar)
-        ) {
-          biaya = tarifData.tarif[0].biaya_inap;
-        } else {
+        if (parkirInapRecord) {
           biaya = tarifData.tarif[0].harga_denda;
         }
-      } else {
-        biaya =
-          duration > 24
-            ? tarifData.tarif[0].harga_denda
-            : tarifData.tarif[0].tarif_harga;
+      } else if (statusParkir === "Reguler" && duration > 24) {
+        biaya = tarifData.tarif[0].harga_denda;
       }
 
       const statusPembayaran = "Sudah bayar";
@@ -290,7 +300,7 @@ const DetailCardMotor = () => {
       try {
         await updateStatusPembayaran({
           variables: {
-            cardMotorId: parseInt(cardId),
+            id: riwayatData.riwayat_scans[0].id,
             biaya,
             statusPembayaran,
           },

@@ -16,7 +16,7 @@ import { Profilebar, Sidebar } from "../../components";
 // GraphQL query to get all parkir inap data
 const GET_ALL_PARKIR_INAP = gql`
   query MyQuery {
-    parkir_inaps {
+    parkir_inaps (order_by: { id: desc }){
       id
       tanggal_masuk
       tanggal_keluar

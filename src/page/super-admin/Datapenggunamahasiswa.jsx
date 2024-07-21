@@ -20,7 +20,7 @@ import { Notification, Profilebar, Sidebar } from "../../components";
 // Get data Graphql Query
 const GET_STUDENTS = gql`
   query MyQuery {
-    users(where: { role_id: { _eq: 3 } }) {
+    users(where: { role_id: { _eq: 3 } }, order_by: { id: asc }) {
       id
       nama
       email

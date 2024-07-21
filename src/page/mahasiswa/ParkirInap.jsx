@@ -14,7 +14,7 @@ import { Notification, Profilebar, Sidebarmahasiswa } from "../../components";
 
 const GET_PARKIR_INAP = gql`
   query MyQuery($userId: Int!) {
-    parkir_inaps(where: { user_id: { _eq: $userId } }) {
+    parkir_inaps(where: { user_id: { _eq: $userId } }, order_by: { id: desc }) {
       id
       tanggal_masuk
       tanggal_keluar
@@ -32,6 +32,7 @@ const GET_PARKIR_INAP = gql`
     }
   }
 `;
+
 
 const INSERT_PARKIR_INAP = gql`
   mutation InsertParkirInap(
@@ -186,6 +187,26 @@ const ParkirInap = () => {
     </div>
   );
 
+  const statusPengajuanBodyTemplate = (rowData) => {
+    let statusClass;
+    switch (rowData.status_pengajuan) {
+      case "Diterima":
+        statusClass =
+          "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full";
+        break;
+      case "Ditolak":
+        statusClass =
+          "bg-red-200 text-red-800 font-semibold py-2 px-4 rounded-full";
+        break;
+      case "Pending":
+      default:
+        statusClass =
+          "bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-full";
+        break;
+    }
+    return <span className={statusClass}>{rowData.status_pengajuan}</span>;
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setNewParkirInap((prev) => ({ ...prev, [name]: value }));
@@ -220,7 +241,7 @@ const ParkirInap = () => {
       "Silahkan tunggu pengajuan parkir inap untuk di approve"
     );
     setNotification(true);
-    setTimeout(() => setNotification(false), 3000);
+    setTimeout(() => setNotification(false), 4000);
     setDisplayDialog(false);
     setDisplayConfirmationDialog(false);
     setLoadingSubmit(false);
@@ -348,7 +369,7 @@ const ParkirInap = () => {
                 </div>
               ) : (
                 <DataTable
-                  value={data?.parkir_inaps}
+                  value={data?.parkir_inaps || []}
                   paginator
                   rows={5}
                   rowsPerPageOptions={[5, 10, 25, 50]}
@@ -368,7 +389,7 @@ const ParkirInap = () => {
                   <Column
                     field="card_motor.mahasiswa.user.nama"
                     header="Nama Mahasiswa"
-                    style={{ width: "20%" }}
+                    style={{ width: "15%" }}
                   />
                   <Column
                     field="card_motor.mahasiswa.NIM"
@@ -425,9 +446,10 @@ const ParkirInap = () => {
                   <Column
                     field="status_pengajuan"
                     header="Status Pengajuan"
+                    body={statusPengajuanBodyTemplate}
                     filter
                     filterPlaceholder="Search by status"
-                    style={{ width: "10%" }}
+                    style={{ width: "15%" }}
                   />
                 </DataTable>
               )}

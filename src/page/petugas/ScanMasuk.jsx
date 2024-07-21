@@ -143,6 +143,7 @@ const ScanMasuk = () => {
 
   const closeDialog = () => {
     setDisplayDialog(false);
+    window.location.reload();
   };
 
   useEffect(() => {

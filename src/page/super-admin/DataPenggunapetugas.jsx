@@ -19,7 +19,7 @@ import { Notification, Profilebar, Sidebar } from "../../components";
 // Get data Graphql Query
 const GET_USERS = gql`
   query MyQuery {
-    users(where: { role_id: { _eq: 2 } }) {
+    users(where: { role_id: { _eq: 2 } }, order_by: { id: asc }) {
       id
       nama
       email
@@ -28,6 +28,7 @@ const GET_USERS = gql`
     }
   }
 `;
+
 
 // Insert data Mutation Graphql Query
 const INSERT_USER = gql`
