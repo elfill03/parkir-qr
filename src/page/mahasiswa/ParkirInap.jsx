@@ -1,4 +1,3 @@
-import React, { useEffect, useState } from "react";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { FilterMatchMode, FilterOperator } from "primereact/api";
 import { Button } from "primereact/button";
@@ -8,6 +7,7 @@ import { DataTable } from "primereact/datatable";
 import { Dialog } from "primereact/dialog";
 import { InputText } from "primereact/inputtext";
 import { ProgressSpinner } from "primereact/progressspinner";
+import React, { useEffect, useState } from "react";
 import { BsPlus } from "react-icons/bs";
 import { useParams } from "react-router-dom";
 import { Notification, Profilebar, Sidebarmahasiswa } from "../../components";
@@ -32,7 +32,6 @@ const GET_PARKIR_INAP = gql`
     }
   }
 `;
-
 
 const INSERT_PARKIR_INAP = gql`
   mutation InsertParkirInap(
@@ -175,7 +174,7 @@ const ParkirInap = () => {
   const imageBodyTemplate = (rowData) => (
     <div className="flex justify-center">
       <img
-        src={rowData.card_motor.foto_motor}
+        src={rowData?.card_motor?.foto_motor}
         alt="Foto Motor"
         style={{
           maxWidth: "100px",
@@ -189,7 +188,7 @@ const ParkirInap = () => {
 
   const statusPengajuanBodyTemplate = (rowData) => {
     let statusClass;
-    switch (rowData.status_pengajuan) {
+    switch (rowData?.status_pengajuan) {
       case "Diterima":
         statusClass =
           "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full";
@@ -204,7 +203,7 @@ const ParkirInap = () => {
           "bg-yellow-200 text-yellow-800 font-semibold py-2 px-4 rounded-full";
         break;
     }
-    return <span className={statusClass}>{rowData.status_pengajuan}</span>;
+    return <span className={statusClass}>{rowData?.status_pengajuan}</span>;
   };
 
   const handleInputChange = (e) => {
@@ -369,7 +368,7 @@ const ParkirInap = () => {
                 </div>
               ) : (
                 <DataTable
-                  value={data?.parkir_inaps || []}
+                  value={data?.parkir_inaps?.filter(Boolean) || []}
                   paginator
                   rows={5}
                   rowsPerPageOptions={[5, 10, 25, 50]}
@@ -410,7 +409,7 @@ const ParkirInap = () => {
                   <Column
                     field="tanggal_masuk"
                     header="Tanggal Masuk"
-                    body={(rowData) => formatDate(rowData.tanggal_masuk)}
+                    body={(rowData) => formatDate(rowData?.tanggal_masuk)}
                     sortable
                     filter
                     filterField="tanggal_masuk"
@@ -427,7 +426,7 @@ const ParkirInap = () => {
                   <Column
                     field="tanggal_keluar"
                     header="Tanggal Keluar"
-                    body={(rowData) => formatDate(rowData.tanggal_keluar)}
+                    body={(rowData) => formatDate(rowData?.tanggal_keluar)}
                     sortable
                     filter
                     filterField="tanggal_keluar"
