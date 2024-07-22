@@ -581,7 +581,7 @@ const ListCardMotor = () => {
               />
             </div>
             <div className="p-field">
-              <label htmlFor="fotoMotor">Foto Motor</label> <br />
+              <label htmlFor="fotoMotor">Foto Motor Depan</label> <br />
               <input
                 type="file"
                 id="fotoMotor"
@@ -650,7 +650,7 @@ const ListCardMotor = () => {
               />
             </div>
             <div className="p-field">
-              <label htmlFor="fotoMotor">Foto Motor</label> <br />
+              <label htmlFor="fotoMotor">Foto Motor Depan</label> <br />
               <input
                 type="file"
                 id="fotoMotor"

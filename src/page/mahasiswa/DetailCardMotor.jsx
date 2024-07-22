@@ -351,9 +351,18 @@ const DetailCardMotor = () => {
                 <p className="text-base">NIM: {card.mahasiswa.NIM}</p>
               </div>
               <div className="max-w-44 space-y-2">
-                <img src={card.foto_STNK} alt="STNK" />
-                <img src={card.foto_KTM} alt="KTM" />
-                <img src={card.foto_motor} alt="Motor" />
+                <div className="border-red-maron bg-grey-200 border-2 rounded-lg">
+                  <p>Foto STNK</p>
+                  <img src={card.foto_STNK} alt="STNK" className="border-t-2 border-red-maron rounded-lg" />
+                </div>
+                <div className="border-red-maron bg-grey-200 border-2 rounded-lg">
+                  <p>Foto KTM</p>
+                  <img src={card.foto_KTM} alt="KTM" className="border-t-2 border-red-maron rounded-lg"/>
+                </div>
+                <div className="border-red-maron bg-grey-200 border-2 rounded-lg">
+                  <p>Foto Motor Depan</p>
+                  <img src={card.foto_motor} alt="Motor" className="border-t-2 border-red-maron rounded-lg"/>
+                </div>
               </div>
               {roleId === 1 && (
                 <div
