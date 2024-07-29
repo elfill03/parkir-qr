@@ -1,6 +1,6 @@
 import { gql, useMutation } from "@apollo/client";
 import { Button } from "primereact/button";
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { QrReader } from "react-qr-reader";
 import { useNavigate } from "react-router-dom";
 import { Notification, Profilebar, Sidebarpetugas } from "../../components";
@@ -61,7 +61,7 @@ const ScanKeluar = () => {
           setNotificationMessage("Scan keluar berhasil disimpan.");
         } else {
           setNotificationMessage(
-            "Gagal memproses scan keluar. Data tidak ditemukan atau sudah diproses sebelumnya."
+            "Data mahasiswa masuk parkir tidak ditemukan."
           );
         }
         setNotification(true);
@@ -76,6 +76,16 @@ const ScanKeluar = () => {
   const closeNotification = () => {
     setNotification(false);
   };
+
+  useEffect(() => {
+    let timer;
+    if (notification) {
+      timer = setTimeout(() => {
+        setNotification(false);
+      }, 5000); 
+    }
+    return () => clearTimeout(timer);
+  }, [notification]);
 
   return (
     <>
