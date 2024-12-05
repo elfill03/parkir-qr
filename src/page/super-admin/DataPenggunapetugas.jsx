@@ -13,13 +13,13 @@ import "primereact/resources/primereact.min.css";
 import "primereact/resources/themes/saga-blue/theme.css";
 import React, { useState } from "react";
 import { BsPlus } from "react-icons/bs";
-import { Notification, Profilebar, Sidebar } from "../../components";
 import { img7 } from "../../assets";
+import { Notification, Profilebar, Sidebar } from "../../components";
 
 // Get data Graphql Query
 const GET_USERS = gql`
   query MyQuery {
-    users(where: { role_id: { _eq: 2 } }) {
+    users(where: { role_id: { _eq: 2 } }, order_by: { id: asc }) {
       id
       nama
       email
@@ -28,6 +28,7 @@ const GET_USERS = gql`
     }
   }
 `;
+
 
 // Insert data Mutation Graphql Query
 const INSERT_USER = gql`
@@ -86,12 +87,16 @@ const DataPenggunapetugas = () => {
   const [updateUser] = useMutation(UPDATE_USER);
 
   const [displayDialog, setDisplayDialog] = useState(false);
+  const [deleteConfirmDialog, setDeleteConfirmDialog] = useState(false);
+  const [deleteUserId, setDeleteUserId] = useState(null);
+
   const numberBodyTemplate = (rowData, { rowIndex }) => rowIndex + 1;
   const [errors, setErrors] = useState({});
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
   const [dialogWidth, setDialogWidth] = useState("30%");
 
   const [filters, setFilters] = useState(null);
@@ -140,6 +145,13 @@ const DataPenggunapetugas = () => {
     setNotificationMessage("Berhasil menghapus data");
     setNotification(true);
     setTimeout(() => setNotification(false), 2000);
+    setDeleteConfirmDialog(false);
+    setDeleteUserId(null);
+  };
+
+  const confirmDeleteUser = (id) => {
+    setDeleteUserId(id);
+    setDeleteConfirmDialog(true);
   };
 
   const handleEditUser = (user) => {
@@ -150,6 +162,7 @@ const DataPenggunapetugas = () => {
 
   const handleSubmit = async () => {
     if (validate()) {
+      setLoadingSubmit(true);
       const hashedPassword = await bcrypt.hash(newUser.password, 10);
       if (isEditMode) {
         await updateUser({
@@ -171,6 +184,7 @@ const DataPenggunapetugas = () => {
       setDisplayDialog(false);
       setNewUser({ nama: "", email: "", password: "" });
       setIsEditMode(false);
+      setLoadingSubmit(false);
     }
   };
 
@@ -199,7 +213,7 @@ const DataPenggunapetugas = () => {
       <Button
         icon="pi pi-trash"
         className="p-button-rounded p-button-danger bg-red-maron text-white-light"
-        onClick={() => handleDeleteUser(rowData.id)}
+        onClick={() => confirmDeleteUser(rowData.id)}
       />
     </div>
   );
@@ -245,6 +259,11 @@ const DataPenggunapetugas = () => {
     setIsEditMode(false);
   };
 
+  const closeNotification = () => {
+    setNotification(false);
+    setNotificationMessage("");
+  };
+
   const header = (
     <div className="flex justify-content-between">
       <Button
@@ -267,7 +286,6 @@ const DataPenggunapetugas = () => {
     </div>
   );
 
-  // Responsive dialog
   React.useEffect(() => {
     const updateDialogWidth = () => {
       if (window.innerWidth <= 680) {
@@ -283,23 +301,18 @@ const DataPenggunapetugas = () => {
     return () => window.removeEventListener("resize", updateDialogWidth);
   }, []);
 
-  const closeNotification = () => {
-    setNotification(false);
-    setNotificationMessage("");
-  };
-
   return (
     <>
       <div className="flex">
         {/* Sidebar */}
         <Sidebar />
 
-        <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
+        <div className="flex flex-col bg-white-maron flex-grow min-h-screen w-screen">
           {/* Profilbar */}
           <Profilebar />
 
           {/* Content */}
-          <center className="mt-auto mb-auto">
+          <center className="mt-auto mb-auto xl:mt-0">
             <div className="card custom-table mb-10">
               <div className="flex" style={{ width: "90%" }}>
                 <h1 className="font-semibold text-2xl">Data Petugas</h1>
@@ -367,9 +380,6 @@ const DataPenggunapetugas = () => {
                   ></Column>
                 </DataTable>
               )}
-              {notification && (
-                <div className="notification">{notificationMessage}</div>
-              )}
             </div>
           </center>
           {/* <Footer /> */}
@@ -384,58 +394,102 @@ const DataPenggunapetugas = () => {
         className="centered-dialog"
         style={{ width: dialogWidth }}
       >
-        <div className="p-fluid">
-          <div className="p-field">
-            <label htmlFor="nama">Nama:</label>
-            <InputText
-              id="nama"
-              name="nama"
-              value={newUser.nama}
-              onChange={handleInputChange}
-              className={`input-border ${errors.nama ? "p-invalid" : ""}`}
-            />
-            {errors.nama && <small className="p-error">{errors.nama}</small>}
+        {loadingSubmit ? (
+          <div className="flex justify-center items-center h-32">
+            <ProgressSpinner />
           </div>
+        ) : (
+          <div>
+            <div className="p-fluid">
+              <div className="p-field">
+                <label htmlFor="nama">Nama:</label>
+                <InputText
+                  id="nama"
+                  name="nama"
+                  value={newUser.nama}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.nama ? "p-invalid" : ""}`}
+                />
+                {errors.nama && (
+                  <small className="p-error">{errors.nama}</small>
+                )}
+              </div>
 
-          <div className="p-field">
-            <label htmlFor="email">Email:</label>
-            <InputText
-              id="email"
-              name="email"
-              value={newUser.email}
-              onChange={handleInputChange}
-              className={`input-border ${errors.email ? "p-invalid" : ""}`}
-            />
-            {errors.email && <small className="p-error">{errors.email}</small>}
-          </div>
+              <div className="p-field">
+                <label htmlFor="email">Email:</label>
+                <InputText
+                  id="email"
+                  name="email"
+                  value={newUser.email}
+                  onChange={handleInputChange}
+                  className={`input-border ${errors.email ? "p-invalid" : ""}`}
+                />
+                {errors.email && (
+                  <small className="p-error">{errors.email}</small>
+                )}
+              </div>
 
-          <div className="p-field">
-            <label htmlFor="password">Password:</label>
-            <Password
-              id="password"
-              name="password"
-              value={newUser.password}
-              onChange={handleInputChange}
-              toggleMask
-              className={`input-border ${errors.password ? "p-invalid" : ""}`}
-            />
-            {errors.password && (
-              <small className="p-error">{errors.password}</small>
-            )}
+              <div className="p-field">
+                <label htmlFor="password">Password:</label>
+                <Password
+                  id="password"
+                  name="password"
+                  value={newUser.password}
+                  onChange={handleInputChange}
+                  toggleMask
+                  className={`input-border ${
+                    errors.password ? "p-invalid" : ""
+                  }`}
+                />
+                {errors.password && (
+                  <small className="p-error">{errors.password}</small>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-center mt-5">
+              <Button
+                label="Batal"
+                icon="pi pi-times"
+                onClick={handleDialogHide}
+                className="bg-red-maron py-2 px-4 text-white-light"
+                severity="danger"
+              />
+              <Button
+                label="Simpan"
+                icon="pi pi-check"
+                onClick={handleSubmit}
+                autoFocus
+                className="bg-green-light py-2 px-4 ms-5 text-white-light"
+                severity="success"
+              />
+            </div>
           </div>
+        )}
+      </Dialog>
+
+      <Dialog
+        header="Konfirmasi Hapus"
+        visible={deleteConfirmDialog}
+        onHide={() => setDeleteConfirmDialog(false)}
+        draggable={false}
+        className="centered-dialog"
+        style={{ width: dialogWidth }}
+      >
+        <div className="flex justify-center mt-5">
+          <p>Apakah Anda yakin ingin menghapus akun petugas berikut?</p>
         </div>
         <div className="flex justify-center mt-5">
           <Button
             label="Batal"
             icon="pi pi-times"
-            onClick={handleDialogHide}
+            onClick={() => setDeleteConfirmDialog(false)}
             className="bg-red-maron py-2 px-4 text-white-light"
             severity="danger"
           />
           <Button
-            label="Simpan"
+            label="Hapus"
             icon="pi pi-check"
-            onClick={handleSubmit}
+            onClick={() => handleDeleteUser(deleteUserId)}
             autoFocus
             className="bg-green-light py-2 px-4 ms-5 text-white-light"
             severity="success"

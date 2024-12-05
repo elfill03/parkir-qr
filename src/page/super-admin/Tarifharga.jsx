@@ -13,16 +13,25 @@ const GET_TARIFF = gql`
     tarif {
       tarif_harga
       harga_denda
+      biaya_inap
     }
   }
 `;
 
 // Update data Mutation Graphql Query
 const UPDATE_TARIFF = gql`
-  mutation UpdateTariff($tarifHarga: Int!, $hargaDenda: Int!) {
+  mutation UpdateTariff(
+    $tarifHarga: Int!
+    $hargaDenda: Int!
+    $biayaInap: Int!
+  ) {
     update_tarif(
       where: {}
-      _set: { tarif_harga: $tarifHarga, harga_denda: $hargaDenda }
+      _set: {
+        tarif_harga: $tarifHarga
+        harga_denda: $hargaDenda
+        biaya_inap: $biayaInap
+      }
     ) {
       affected_rows
     }
@@ -35,29 +44,42 @@ const Tarifharga = () => {
   const [displayDialog, setDisplayDialog] = useState(false);
   const [newTarifHarga, setNewTarifHarga] = useState(0);
   const [newHargaDenda, setNewHargaDenda] = useState(0);
+  const [newBiayaInap, setNewBiayaInap] = useState(0);
+  const [originalTarifHarga, setOriginalTarifHarga] = useState(0);
+  const [originalHargaDenda, setOriginalHargaDenda] = useState(0);
+  const [originalBiayaInap, setOriginalBiayaInap] = useState(0);
   const [notification, setNotification] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState("");
   const [dialogWidth, setDialogWidth] = useState("30%");
 
   useEffect(() => {
     if (data) {
-      if (newTarifHarga === 0) {
-        setNewTarifHarga(data?.tarif[0]?.tarif_harga || 0);
-      }
-      if (newHargaDenda === 0) {
-        setNewHargaDenda(data?.tarif[0]?.harga_denda || 0);
-      }
+      setNewTarifHarga(data?.tarif[0]?.tarif_harga || 0);
+      setNewHargaDenda(data?.tarif[0]?.harga_denda || 0);
+      setNewBiayaInap(data?.tarif[0]?.biaya_inap || 0);
+      setOriginalTarifHarga(data?.tarif[0]?.tarif_harga || 0);
+      setOriginalHargaDenda(data?.tarif[0]?.harga_denda || 0);
+      setOriginalBiayaInap(data?.tarif[0]?.biaya_inap || 0);
     }
   }, [data]);
 
-  // Handle submit
+  const handleValueChange = (value, setter) => {
+    setter(value || 0);
+  };
+
   const handleSubmit = async () => {
     try {
       const { data } = await updateTariff({
-        variables: { tarifHarga: newTarifHarga, hargaDenda: newHargaDenda },
+        variables: {
+          tarifHarga: newTarifHarga,
+          hargaDenda: newHargaDenda,
+          biayaInap: newBiayaInap,
+        },
       });
       if (data.update_tarif.affected_rows > 0) {
-        setNotificationMessage("Berhasil mengubah harga tarif dan denda");
+        setNotificationMessage(
+          "Berhasil mengubah harga tarif, biaya inap, dan denda"
+        );
         setNotification(true);
         refetch();
       }
@@ -68,13 +90,18 @@ const Tarifharga = () => {
     }
   };
 
-  // Hide notification
+  const handleCancel = () => {
+    setNewTarifHarga(originalTarifHarga);
+    setNewHargaDenda(originalHargaDenda);
+    setNewBiayaInap(originalBiayaInap);
+    setDisplayDialog(false);
+  };
+
   const closeNotification = () => {
     setNotification(false);
   };
 
-  // Responsive dialog
-  React.useEffect(() => {
+  useEffect(() => {
     const updateDialogWidth = () => {
       if (window.innerWidth <= 680) {
         setDialogWidth("80%");
@@ -94,15 +121,12 @@ const Tarifharga = () => {
   return (
     <>
       <div className="flex">
-        {/* Sidebar */}
         <Sidebar />
 
         <div className="flex flex-col bg-white-maron flex-grow min-h-screen max-w-screen">
-          {/* Profilbar */}
           <Profilebar />
 
-          {/* Content */}
-          <center>
+          <center className="mt-auto mb-auto xl:mt-0">
             <div className="mb-5">
               <div className="flex" style={{ width: "90%" }}>
                 <h1 className="font-semibold text-2xl">Tarif Harga Parkir</h1>
@@ -112,12 +136,12 @@ const Tarifharga = () => {
                 style={{ width: "90%" }}
               />
             </div>
-          </center>
-          <center className="mt-auto mb-auto">
             <div className="flex" style={{ width: "90%" }}>
               <div className="p-5 bg-white-light rounded-xl">
                 <img className="h-auto w-30 mb-5" src={img5} alt="motorcycle" />
-                <h1 className="text-lg font-semibold">Tarif Parkir & Denda</h1>
+                <h1 className="text-lg font-semibold">
+                  Tarif Parkir, Biaya Inap, & Denda
+                </h1>
                 <hr className="mb-5 bg-red-maron pt-1" />
                 {loading ? (
                   <div className="flex justify-center items-center h-32">
@@ -131,7 +155,13 @@ const Tarifharga = () => {
                         : Rp. {newTarifHarga.toLocaleString("id-ID")}
                       </h1>
                     </div>
-                    <div className="flex mt-2 mb-10 w-full text-start justify-center text-base font-semibold">
+                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
+                      <h1 className="w-24">Biaya Inap</h1>
+                      <h1 className="w-24">
+                        : Rp. {newBiayaInap.toLocaleString("id-ID")}
+                      </h1>
+                    </div>
+                    <div className="flex my-2 w-full text-start justify-center text-base font-semibold">
                       <h1 className="w-24">Denda</h1>
                       <h1 className="w-24">
                         : Rp. {newHargaDenda.toLocaleString("id-ID")}
@@ -148,16 +178,14 @@ const Tarifharga = () => {
               </div>
             </div>
           </center>
-          {/* <Footer /> */}
         </div>
       </div>
 
-      {/* Dialog pop up */}
       <Dialog
-        header="Edit Tarif Parkir & Denda"
+        header="Edit Tarif Parkir, Denda & Biaya Inap"
         visible={displayDialog}
         style={{ width: dialogWidth }}
-        onHide={() => setDisplayDialog(false)}
+        onHide={handleCancel}
         draggable={false}
         className="centered-dialog"
       >
@@ -167,7 +195,21 @@ const Tarifharga = () => {
             <InputNumber
               id="tarifHarga"
               value={newTarifHarga}
-              onValueChange={(e) => setNewTarifHarga(e.value)}
+              onValueChange={(e) =>
+                handleValueChange(e.value, setNewTarifHarga)
+              }
+              mode="currency"
+              currency="IDR"
+              locale="id-ID"
+              className="input-border"
+            />
+          </div>
+          <div className="p-field">
+            <label htmlFor="biayaInap">Biaya Inap</label>
+            <InputNumber
+              id="biayaInap"
+              value={newBiayaInap}
+              onValueChange={(e) => handleValueChange(e.value, setNewBiayaInap)}
               mode="currency"
               currency="IDR"
               locale="id-ID"
@@ -179,7 +221,9 @@ const Tarifharga = () => {
             <InputNumber
               id="hargaDenda"
               value={newHargaDenda}
-              onValueChange={(e) => setNewHargaDenda(e.value)}
+              onValueChange={(e) =>
+                handleValueChange(e.value, setNewHargaDenda)
+              }
               mode="currency"
               currency="IDR"
               locale="id-ID"
@@ -191,7 +235,7 @@ const Tarifharga = () => {
           <Button
             label="Batal"
             icon="pi pi-times"
-            onClick={() => setDisplayDialog(false)}
+            onClick={handleCancel}
             className="bg-red-maron py-2 px-4 text-white-light"
             severity="danger"
           />
@@ -206,7 +250,6 @@ const Tarifharga = () => {
         </div>
       </Dialog>
 
-      {/* Notification pop up */}
       <Notification
         message={notificationMessage}
         visible={notification}

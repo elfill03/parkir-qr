@@ -19,7 +19,7 @@ const DashboardMahasiswa = () => {
                 src={img2}
                 alt="Telkom University"
                 className="my-auto hidden sm:block"
-                style={{ width: "auto", height: "auto" }}
+                style={{ width: "40%", height: "auto" }}
               />
             </div>
             <div className="flex items-center justify-center">
@@ -27,7 +27,7 @@ const DashboardMahasiswa = () => {
                 src={img3}
                 alt="Car and QR Code"
                 className="mt-5"
-                style={{ width: "70%", height: "auto" }}
+                style={{ width: "60%", height: "auto" }}
               />
             </div>
           </div>

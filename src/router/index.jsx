@@ -5,10 +5,14 @@ import {
   Datamahasiswa,
   Datapetugas,
   Detailcardmotor,
+  ListParkirInap,
   Listcardmotor,
   Login,
+  ParkirInap,
   Riwayatkeluar,
   Riwayatmasuk,
+  Scankeluar,
+  Scanmasuk,
   Tarif,
   Tarifparkirmahasiswa,
 } from "../page";
@@ -44,6 +48,22 @@ const router = [
     ),
   },
   {
+    path: "/scan-masuk-parkir",
+    element: (
+      <ProtectedRoute roleRequired={2}>
+        <Scanmasuk />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/scan-keluar-parkir",
+    element: (
+      <ProtectedRoute roleRequired={2}>
+        <Scankeluar />
+      </ProtectedRoute>
+    ),
+  },
+  {
     path: "/data-petugas",
     element: (
       <ProtectedRoute roleRequired={1}>
@@ -72,6 +92,22 @@ const router = [
     element: (
       <ProtectedRoute roleRequired={3}>
         <Tarifparkirmahasiswa />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/pengajuan-parkir-inap/:userId",
+    element: (
+      <ProtectedRoute roleRequired={3}>
+        <ParkirInap />
+      </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/list-pengajuan-parkir-inap",
+    element: (
+      <ProtectedRoute roleRequired={1}>
+        <ListParkirInap />
       </ProtectedRoute>
     ),
   },

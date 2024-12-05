@@ -1,6 +1,6 @@
 import { gql, useLazyQuery } from "@apollo/client";
 import bcrypt from "bcryptjs";
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { BsEye, BsEyeSlash } from "react-icons/bs";
 import { useNavigate } from "react-router-dom";
 import { img1, img6 } from "../../assets";
@@ -43,25 +43,24 @@ const Login = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    login({ variables: { email } });
-  };
+    setNotification(false); // Reset notification before new login attempt
 
-  const closeNotification = () => {
-    setNotification(false);
-  };
+    // Fetch user data
+    const { data } = await login({ variables: { email } });
 
-  useEffect(() => {
     if (data && data.users.length > 0) {
-      const user = data.users[0];
-      const { role_id, password: hashedPassword } = user;
+      const user = data.users[0]; // Get the first user matching the email
 
-      const isPasswordValid =
-        bcrypt.compareSync(password, hashedPassword) ||
-        password === hashedPassword;
+      // Compare password with hash in the database or plain text
+      const isPasswordMatch =
+        bcrypt.compareSync(password, user.password) ||
+        password === user.password;
 
-      if (isPasswordValid) {
+      if (isPasswordMatch) {
+        const { role_id } = user;
+
         // Store user details in localStorage
         localStorage.setItem("user", JSON.stringify(user));
 
@@ -70,12 +69,16 @@ const Login = () => {
         else if (role_id === 2) navigate("/dashboard-petugas");
         else if (role_id === 3) navigate("/dashboard-mahasiswa");
       } else {
+        setNotification(true);
       }
-    } else if (data && data.users.length === 0) {
-      // Handle login failure
+    } else {
       setNotification(true);
     }
-  }, [data, password, navigate]);
+  };
+
+  const closeNotification = () => {
+    setNotification(false);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-white-maron">
@@ -154,16 +157,6 @@ const Login = () => {
                 Login failed. Please try again.
               </p>
             )}
-            <div className="flex justify-center">
-              <div className="text-sm">
-                <a
-                  href="#"
-                  className="font-medium text-red-600 hover:text-red-500"
-                >
-                  Forgot Password?
-                </a>
-              </div>
-            </div>
           </form>
         </div>
 

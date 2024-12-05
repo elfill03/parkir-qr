@@ -3,19 +3,16 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import React, { useState } from "react";
 import {
   BsArrowRight,
-  BsBicycle,
-  BsCalendarRange,
-  BsCashCoin,
+  BsClockHistory,
   BsHouseDoor,
   BsList,
+  BsQrCodeScan,
 } from "react-icons/bs";
 import { NavLink } from "react-router-dom";
 import { img1 } from "../../assets";
 
-const SidebarMahasiswa = () => {
+const SidebarPetugas = () => {
   const [open, setOpen] = useState(false);
-  const user = JSON.parse(localStorage.getItem("user"));
-  const userId = user ? user.id : null;
 
   return (
     <>
@@ -53,7 +50,7 @@ const SidebarMahasiswa = () => {
                 >
                   <div className="flex py-5">
                     <NavLink
-                      to="/dashboard-mahasiswa"
+                      to="/dashboard-petugas"
                       className={({ isActive }) =>
                         `flex items-center ${
                           isActive
@@ -92,14 +89,13 @@ const SidebarMahasiswa = () => {
                 >
                   <div>
                     <MenuButton className="inline-flex w-full justify-start gap-x-1.5 rounded-md bg-white-light px-4 py-2 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-white-maron transition-all duration-500 ease-in-out">
-                      <BsBicycle className="my-auto ms-1 text-2xl" />
-
+                      <BsQrCodeScan className="my-auto ms-1 text-2xl" />
                       <span
                         className={`${
                           !open && "hidden"
                         } ms-4 transition-opacity duration-500 ease-in-out`}
                       >
-                        List Card Motor
+                        Scan QR Code
                       </span>
                       <ChevronDownIcon
                         className={`-mr-1 h-5 w-5 text-black ms-auto me-6 ${
@@ -118,7 +114,7 @@ const SidebarMahasiswa = () => {
                       <MenuItem>
                         {({ active }) => (
                           <NavLink
-                            to={`/list-card-motor/${userId}`}
+                            to="/scan-masuk-parkir"
                             className={({ isActive }) =>
                               `flex px-4 py-2 text-base ${
                                 isActive
@@ -128,7 +124,24 @@ const SidebarMahasiswa = () => {
                             }
                           >
                             <BsArrowRight className="my-auto" />
-                            <span className="ms-3">Card Motor</span>
+                            <span className="ms-3">Masuk Parkir</span>
+                          </NavLink>
+                        )}
+                      </MenuItem>
+                      <MenuItem>
+                        {({ active }) => (
+                          <NavLink
+                            to="/scan-keluar-parkir"
+                            className={({ isActive }) =>
+                              `flex px-4 py-2 text-base ${
+                                isActive
+                                  ? " text-red-maron bg-white-maron"
+                                  : "text-gray-700"
+                              }`
+                            }
+                          >
+                            <BsArrowRight className="my-auto" />
+                            <span className="ms-3">Keluar Parkir</span>
                           </NavLink>
                         )}
                       </MenuItem>
@@ -141,13 +154,13 @@ const SidebarMahasiswa = () => {
                 >
                   <div>
                     <MenuButton className="inline-flex w-full justify-start gap-x-1.5 rounded-md bg-white-light px-4 py-2 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-white-maron transition-all duration-500 ease-in-out">
-                      <BsCashCoin className="my-auto ms-1 text-2xl" />
+                      <BsClockHistory className="my-auto ms-1 text-2xl" />
                       <span
                         className={`${
                           !open && "hidden"
                         } ms-4 transition-opacity duration-500 ease-in-out`}
                       >
-                        Tarif Harga
+                        Riwayat Scan QR
                       </span>
                       <ChevronDownIcon
                         className={`-mr-1 h-5 w-5 text-black ms-auto me-6 ${
@@ -166,7 +179,7 @@ const SidebarMahasiswa = () => {
                       <MenuItem>
                         {({ active }) => (
                           <NavLink
-                            to="/tarif-parkir-mahasiswa"
+                            to="/riwayat-masuk-parkir"
                             className={({ isActive }) =>
                               `flex px-4 py-2 text-base ${
                                 isActive
@@ -176,55 +189,24 @@ const SidebarMahasiswa = () => {
                             }
                           >
                             <BsArrowRight className="my-auto" />
-                            <span className="ms-3">Tarif Parkir</span>
+                            <span className="ms-3">Masuk Parkir</span>
                           </NavLink>
                         )}
                       </MenuItem>
-                    </div>
-                  </MenuItems>
-                </Menu>
-                <Menu
-                  as="div"
-                  className="relative inline-block text-left w-full mt-4"
-                >
-                  <div>
-                    <MenuButton className="inline-flex w-full justify-start gap-x-1.5 rounded-md bg-white-light px-4 py-2 text-base font-semibold text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-white-maron transition-all duration-500 ease-in-out">
-                      <BsCalendarRange className="my-auto ms-1 text-2xl" />
-                      <span
-                        className={`${
-                          !open && "hidden"
-                        } ms-4 transition-opacity duration-500 ease-in-out`}
-                      >
-                        Parkir Inap
-                      </span>
-                      <ChevronDownIcon
-                        className={`-mr-1 h-5 w-5 text-black ms-auto me-6 ${
-                          !open && "hidden"
-                        }`}
-                        aria-hidden="true"
-                      />
-                    </MenuButton>
-                  </div>
-                  <MenuItems
-                    className={`absolute right-0 z-10 mt-2 w-72 origin-top-right divide-y divide-gray-100 rounded-md bg-white-light shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-500 ease-in-out ${
-                      !open && "hidden"
-                    }`}
-                  >
-                    <div className="py-1">
                       <MenuItem>
                         {({ active }) => (
                           <NavLink
-                            to={`/pengajuan-parkir-inap/${userId}`}
+                            to="/riwayat-keluar-parkir"
                             className={({ isActive }) =>
                               `flex px-4 py-2 text-base ${
                                 isActive
-                                  ? "text-red-maron bg-white-maron"
+                                  ? " text-red-maron bg-white-maron"
                                   : "text-gray-700"
                               }`
                             }
                           >
                             <BsArrowRight className="my-auto" />
-                            <span className="ms-3">Pengajuan Parkir Inap</span>
+                            <span className="ms-3">Keluar Parkir</span>
                           </NavLink>
                         )}
                       </MenuItem>
@@ -249,4 +231,4 @@ const SidebarMahasiswa = () => {
   );
 };
 
-export default SidebarMahasiswa;
+export default SidebarPetugas;

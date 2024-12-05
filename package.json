@@ -10,7 +10,8 @@
     "preview": "vite preview"
   },
   "resolutions": {
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "dependencies": {
     "@apollo/client": "^3.10.8",
@@ -21,9 +22,12 @@
     "@material-tailwind/react": "^2.1.9",
     "@mui/x-data-grid": "^7.7.1",
     "@tanstack/react-table": "^8.17.3",
+    "bcryptjs": "^2.4.3",
     "bootstrap": "^5.3.3",
+    "crypto-js": "^4.2.0",
     "firebase": "^10.12.2",
     "graphql": "^16.9.0",
+    "jspdf": "^2.5.1",
     "primeicons": "^7.0.0",
     "primereact": "^10.6.6",
     "qrcode.react": "^3.1.0",
@@ -34,6 +38,7 @@
     "react-data-table-component": "^7.6.2",
     "react-dom": "^18.3.1",
     "react-icons": "^5.2.1",
+    "react-qr-reader": "^3.0.0-beta-1",
     "react-router-dom": "^6.24.0",
     "react-table": "^7.8.0",
     "recharts": "^2.12.7"

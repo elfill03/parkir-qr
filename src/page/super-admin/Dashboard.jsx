@@ -37,18 +37,40 @@ const GET_PETUGAS_COUNT = gql`
 const GET_RIWAYAT_PARKIR = gql`
   query GetRiwayatParkir($startDate: timestamptz!, $endDate: timestamptz!) {
     riwayat_scans(where: { scan_masuk: { _gte: $startDate, _lte: $endDate } }) {
+      id
       scan_masuk
       scan_keluar
     }
   }
 `;
 
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="custom-tooltip bg-grey-light p-2 rounded space-y-1">
+        <p className="label">{`Tanggal ${label}`}</p>
+        <p
+          className="intro text-white-light py-1"
+          style={{ backgroundColor: "#8884d8" }}
+        >{`Masuk: ${payload[0].value}`}</p>
+        <p
+          className="intro text-white-light py-1"
+          style={{ backgroundColor: "#82ca9d" }}
+        >{`Keluar: ${payload[1].value}`}</p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
 const Dashboard = () => {
   const { data: mahasiswaData } = useQuery(GET_MAHASISWA_COUNT, { client });
   const { data: petugasData } = useQuery(GET_PETUGAS_COUNT, { client });
   const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
   const [chartData, setChartData] = useState([]);
-  const [totalVehicles, setTotalVehicles] = useState(0);
+  const [totalVehiclesIn, setTotalVehiclesIn] = useState(0);
+  const [totalVehiclesOut, setTotalVehiclesOut] = useState(0);
 
   const startDate = new Date(
     new Date().getFullYear(),
@@ -79,15 +101,17 @@ const Dashboard = () => {
 
       const formattedData = riwayatData.riwayat_scans.reduce((acc, scan) => {
         const masukDate = new Date(scan.scan_masuk).getDate();
-        const keluarDate = new Date(scan.scan_keluar).getDate();
+        const keluarDate = scan.scan_keluar
+          ? new Date(scan.scan_keluar).getDate()
+          : null;
 
         if (!acc[masukDate])
           acc[masukDate] = { date: masukDate, masuk: 0, keluar: 0 };
-        if (!acc[keluarDate])
+        if (keluarDate && !acc[keluarDate])
           acc[keluarDate] = { date: keluarDate, masuk: 0, keluar: 0 };
 
         acc[masukDate].masuk += 1;
-        acc[keluarDate].keluar += 1;
+        if (keluarDate) acc[keluarDate].keluar += 1;
 
         return acc;
       }, {});
@@ -102,7 +126,9 @@ const Dashboard = () => {
 
       const totalMasuk = dataArray.reduce((sum, data) => sum + data.masuk, 0);
       const totalKeluar = dataArray.reduce((sum, data) => sum + data.keluar, 0);
-      setTotalVehicles(totalMasuk + totalKeluar);
+
+      setTotalVehiclesIn(totalMasuk);
+      setTotalVehiclesOut(totalKeluar);
     }
   }, [riwayatData, selectedMonth]);
 
@@ -140,7 +166,7 @@ const Dashboard = () => {
               </div>
               <div className="p-6 text-center">
                 <p className="text-base md:text-base sm:text-sm font-medium text-gray-700">
-                  Jumlah Kendaraan
+                  Jumlah Kendaraan Masuk Bulan Ini
                 </p>
                 {loadingRiwayat ? (
                   <div className="flex justify-center items-center h-24">
@@ -148,7 +174,21 @@ const Dashboard = () => {
                   </div>
                 ) : (
                   <p className="text-3xl font-bold text-gray-900">
-                    {totalVehicles}
+                    {totalVehiclesIn}
+                  </p>
+                )}
+              </div>
+              <div className="p-6 text-center">
+                <p className="text-base md:text-base sm:text-sm font-medium text-gray-700">
+                  Jumlah Kendaraan Keluar Bulan Ini
+                </p>
+                {loadingRiwayat ? (
+                  <div className="flex justify-center items-center h-24">
+                    <ProgressSpinner />
+                  </div>
+                ) : (
+                  <p className="text-3xl font-bold text-gray-900">
+                    {totalVehiclesOut}
                   </p>
                 )}
               </div>
@@ -196,7 +236,7 @@ const Dashboard = () => {
                         position: "insideLeft",
                       }}
                     />
-                    <Tooltip />
+                    <Tooltip content={<CustomTooltip />} />
                     <Legend verticalAlign="top" align="center" />
                     <Bar dataKey="masuk" fill="#8884d8" name="Masuk" />
                     <Bar dataKey="keluar" fill="#82ca9d" name="Keluar" />
@@ -206,7 +246,6 @@ const Dashboard = () => {
             </div>
           </div>
         </center>
-        {/* <Footer /> */}
       </div>
     </div>
   );

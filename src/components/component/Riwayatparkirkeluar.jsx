@@ -8,6 +8,7 @@ import { ProgressSpinner } from "primereact/progressspinner";
 import "primereact/resources/primereact.min.css";
 import "primereact/resources/themes/saga-blue/theme.css";
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // Get data Graphql Query
 const GET_RIWAYAT_PARKIR_KELUAR = gql`
@@ -16,11 +17,14 @@ const GET_RIWAYAT_PARKIR_KELUAR = gql`
       scan_keluar
       biaya
       status_pembayaran
+      status_parkir
       card_motor {
-        foto_QR_Code
+        id
+        foto_motor
         mahasiswa {
           NIM
           user {
+            id
             nama
             email
           }
@@ -32,6 +36,7 @@ const GET_RIWAYAT_PARKIR_KELUAR = gql`
 
 const Riwayatparkirkeluar = () => {
   const { loading, error, data } = useQuery(GET_RIWAYAT_PARKIR_KELUAR);
+  const navigate = useNavigate();
   const [sortField, setSortField] = useState("scan_keluar_sort");
   const [sortOrder, setSortOrder] = useState(-1); // -1 for descending, 1 for ascending
   const [filters, setFilters] = useState(null);
@@ -69,6 +74,10 @@ const Riwayatparkirkeluar = () => {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.CONTAINS }],
       },
+      status_parkir: {
+        operator: FilterOperator.AND,
+        constraints: [{ value: null, matchMode: FilterMatchMode.EQUALS }],
+      },
       scan_keluar: {
         operator: FilterOperator.AND,
         constraints: [{ value: null, matchMode: FilterMatchMode.DATE_IS }],
@@ -90,28 +99,55 @@ const Riwayatparkirkeluar = () => {
     if (!isoDate) return "Belum keluar";
     const date = new Date(isoDate);
     // Adjust timezone
-    date.setHours(date.getHours() - 7);
+    date.setHours(date.getHours());
     const formattedDate = `${date.getDate()}-${
       date.getMonth() + 1
     }-${date.getFullYear()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
     return formattedDate;
   };
 
+  // Format biaya
+  const formatBiaya = (biaya) => {
+    return `Rp. ${biaya.toLocaleString("id-ID")}`;
+  };
+
+  // Navigate to detail
+  const navigateToDetail = (userId, cardMotorId) => {
+    navigate(`/list-card-motor/${userId}/detail-card-motor/${cardMotorId}`);
+  };
+
   // Image column
   const imageBodyTemplate = (rowData) => (
     <div className="flex justify-center">
       <img
-        src={rowData.card_motor.foto_QR_Code}
-        alt="Foto Mahasiswa"
+        src={rowData.card_motor.foto_motor}
+        alt="Foto Motor"
         style={{
-          maxWidth: "100px",
+          maxWidth: "120px",
           minWidth: "60px",
           width: "100%",
           height: "auto",
+          cursor: "pointer",
         }}
+        className="border-red-maron bg-grey-maron hover:bg-gray-200 border-2 rounded-lg p-1"
+        onClick={() =>
+          navigateToDetail(
+            rowData.card_motor.mahasiswa.user.id,
+            rowData.card_motor.id
+          )
+        }
       />
     </div>
   );
+
+  const statusParkirBodyTemplate = (rowData) => {
+    const statusParkirClass =
+      rowData.status_parkir === "Parkir Inap"
+        ? "bg-green-200 text-green-800 font-semibold py-2 px-4 rounded-full"
+        : "bg-blue-200 text-blue-800 font-semibold py-2 px-4 rounded-full";
+
+    return <span className={statusParkirClass}>{rowData.status_parkir}</span>;
+  };
 
   // Handle sorting
   const onSortChange = (event) => {
@@ -144,7 +180,7 @@ const Riwayatparkirkeluar = () => {
   return (
     <>
       {/* Table Riwayat Keluar */}
-      <center className="mt-auto mb-auto">
+      <center className="mt-auto mb-auto xl:mt-0">
         <div className="card custom-table mb-10">
           <div className="flex" style={{ width: "90%" }}>
             <h1 className="font-semibold text-2xl">Riwayat Parkir Keluar</h1>
@@ -175,6 +211,7 @@ const Riwayatparkirkeluar = () => {
                 "card_motor.mahasiswa.NIM",
                 "card_motor.mahasiswa.user.email",
                 "status_pembayaran",
+                "status_parkir",
               ]}
               header={header}
               emptyMessage="No parking records found."
@@ -185,7 +222,7 @@ const Riwayatparkirkeluar = () => {
                 header="Nama Mahasiswa"
                 filter
                 filterPlaceholder="Search by name"
-                style={{ width: "20%" }}
+                style={{ width: "15%" }}
               />
               <Column
                 field="card_motor.mahasiswa.NIM"
@@ -199,22 +236,27 @@ const Riwayatparkirkeluar = () => {
                 header="Email"
                 filter
                 filterPlaceholder="Search by email"
-                style={{ width: "20%" }}
+                style={{ width: "15%" }}
               />
-              <Column field="biaya" header="Biaya" style={{ width: "10%" }} />
+              <Column
+                field="biaya"
+                header="Biaya"
+                body={(rowData) => formatBiaya(rowData.biaya)}
+                style={{ width: "10%" }}
+              />
               <Column
                 field="status_pembayaran"
                 header="Status Pembayaran"
                 filter
                 filterPlaceholder="Search by status"
-                style={{ width: "15%", color: "black" }}
+                style={{ width: "10%", color: "black" }}
                 sortable
               />
               <Column
-                field="card_motor.foto_QR_Code"
-                header="Foto QR Code"
+                field="card_motor.foto_motor"
+                header="Foto Motor"
                 body={imageBodyTemplate}
-                style={{ width: "10%" }}
+                style={{ width: "15%" }}
               />
               <Column
                 field="scan_keluar"
@@ -227,6 +269,15 @@ const Riwayatparkirkeluar = () => {
                   <InputText type="date" onChange={onGlobalFilterChange} />
                 }
                 style={{ width: "15%", color: "black" }}
+              />
+              <Column
+                field="status_parkir"
+                header="Status Parkir"
+                body={statusParkirBodyTemplate}
+                sortable
+                filter
+                filterPlaceholder="Search by status"
+                style={{ width: "10%" }}
               />
             </DataTable>
           )}
